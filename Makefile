@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS=-Wall
 EXE=server
-EXE_DEPS=
+EXE_DEPS=server.o
 
-HEADER_DIR = ./headers
+HEADER_DIR = ./header
 BUILD_DIR = ./build
 SRC_DIR = ./src
 
