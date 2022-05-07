@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall
 EXE=server
-EXE_DEPS=server.o socket.o
+EXE_DEPS=server.o socket.o http.o
 
 HEADER_DIR = ./header
 BUILD_DIR = ./build

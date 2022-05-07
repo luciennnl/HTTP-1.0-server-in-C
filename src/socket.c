@@ -24,6 +24,8 @@ socket_info *socket_init(protocol_number protocol_no, char *port) {
     if ((listenfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) < 0) {
         fprintf(stderr, "server.c - socket_init() - Failed to create socket from desired family type\n");
     }
+
+    // Set socket options so that the same port can be reused with no downtime
     if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &re, sizeof(re)) != 0) {
         fprintf(stderr, "server.c - socket_init() - Failed to set socket options (setsockopt() failed)...\n");
     }
@@ -62,20 +64,25 @@ void socket_listen(int listenfd, struct addrinfo *addr) {
     }
 }
 
-void socket_handle_messages(int listenfd, int client_max, uint64_t (*response_func)(char**, char*, int)) {
+void socket_handle_messages(int listenfd, int client_max, char *(*response_func)(uint64_t*, char*, int)) {
     
     struct sockaddr_storage client_addr;
-    int connfd, request_len, response_len;
+    int connfd;
+    uint64_t request_len, response_len;
     socklen_t client_addr_size = sizeof(client_addr);
     char *response = NULL;
+    
     char recvBuffer[8192];
     while (true) {
         connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_addr_size);
 
         if ((request_len = read(connfd, recvBuffer, sizeof(recvBuffer)-1)) > 0) {
-            response_len = response_func(&response, recvBuffer, request_len);
+            response = response_func(&response_len, recvBuffer, request_len);
+            // If response is empty, something went wrong, don't send
             if (response != NULL) {
                 send(connfd, response, response_len, 0);
+
+                // Free the response string
                 free(response);
             }
         }

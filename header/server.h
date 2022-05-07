@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include "./socket.h"
+#include "./http.h"
 
 #define EXPECTED_INPUT_CNT 3
 #define PROTOCOL_NO_ARG_NO 1
@@ -24,7 +25,6 @@ struct config {
 
 typedef struct config config;
 
-uint64_t testRequestHandler(char **response, char *argv, int arg);
 config *read_input(int argc, char *argv[]);
 
 #endif

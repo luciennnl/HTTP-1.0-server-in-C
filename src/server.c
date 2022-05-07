@@ -8,18 +8,12 @@ int main(int argc, char *argv[]) {
     
     socket_listen(socket->fd, socket->addr);
 
-    socket_handle_messages(socket->fd, 10, &testRequestHandler);
+    socket_handle_messages(socket->fd, 10, &http_get);
     close(socket->fd);
 
     socket_free(socket);
     free(cfg);
     return 0;
-}
-uint64_t testRequestHandler(char **response, char *argv, int arg) {
-    *response = malloc(1024 * sizeof(char));
-    strcpy(*response, "Hello World\n");
-
-    return sizeof("Hello World\n");
 }
 config *read_input(int argc, char *argv[]) {
     if (argc != EXPECTED_INPUT_CNT + 1) {
