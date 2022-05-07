@@ -64,11 +64,11 @@ void socket_listen(int listenfd, struct addrinfo *addr) {
     }
 }
 
-void socket_handle_messages(int listenfd, int client_max, char *(*response_func)(uint64_t*, char*, int)) {
+void socket_handle_messages(int listenfd, int client_max, char *(*response_func)(long*, char*, int)) {
     
     struct sockaddr_storage client_addr;
     int connfd;
-    uint64_t request_len, response_len;
+    long request_len, response_len;
     socklen_t client_addr_size = sizeof(client_addr);
     char *response = NULL;
     
@@ -86,6 +86,6 @@ void socket_handle_messages(int listenfd, int client_max, char *(*response_func)
                 free(response);
             }
         }
-        
+        close(connfd);
     }
 }

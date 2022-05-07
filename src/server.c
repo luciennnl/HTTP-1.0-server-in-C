@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     
     socket_listen(socket->fd, socket->addr);
 
-    socket_handle_messages(socket->fd, 10, &http_get);
+    socket_handle_messages(socket->fd, 10, &http_get_string_adaptor);
     close(socket->fd);
 
     socket_free(socket);
