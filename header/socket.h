@@ -28,5 +28,5 @@ socket_info *socket_init(protocol_number protocol_no, char *port);
 void socket_free(socket_info *socket);
 struct addrinfo *get_socket_of_family_type(struct addrinfo *addr, int family_type);
 void socket_listen(int sockfd, struct addrinfo *addr);
-void socket_handle_messages(int sockfd, int client_max, char *(*response_func)(long*, char*, int));
+void socket_handle_messages(int sockfd, int client_max, void *(*response_func)(long*, char*, int));
 #endif

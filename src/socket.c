@@ -64,13 +64,13 @@ void socket_listen(int listenfd, struct addrinfo *addr) {
     }
 }
 
-void socket_handle_messages(int listenfd, int client_max, char *(*response_func)(long*, char*, int)) {
+void socket_handle_messages(int listenfd, int client_max, void *(*response_func)(long*, char*, int)) {
     
     struct sockaddr_storage client_addr;
     int connfd;
     long request_len, response_len;
     socklen_t client_addr_size = sizeof(client_addr);
-    char *response = NULL;
+    void *response = NULL;
     
     char recvBuffer[8192];
     while (true) {

@@ -12,7 +12,7 @@ http_response *http_get(char* req, int reqlen) {
     free(path);
     return response;
 }
-char *http_get_string_adaptor(uint64_t *response_len, char *req, int reqLen) {
+void *http_get_string_adaptor(long *response_len, char *req, int reqLen) {
     http_response *response = http_get(req, reqLen);
     *response_len = response->len;
 
@@ -21,9 +21,9 @@ char *http_get_string_adaptor(uint64_t *response_len, char *req, int reqLen) {
         http_response_destructor(response);
         return NULL;
     }
-    char *ret = malloc(response->len * sizeof(char));
+    void *ret = malloc(response->len);
     // Save the content into its separate string
-    strcpy(ret, response->content);
+    memcpy(ret, response->content, response->len);
     http_response_destructor(response);
     return ret;
 }
@@ -46,7 +46,12 @@ http_response *get_response_200(FILE *f, char *path) {
 
     // Get body
     long body_len;
-    char *body = retrieve_file_contents(f, &body_len);
+    void *body;
+    if (strcmp(content_type, CONTENT_TYPE_JPEG) == 0) {
+        body = retrieve_file_contents_binary(f, &body_len);
+    } else {
+        body = retrieve_file_contents_text(f, &body_len);
+    }
     response->content = malloc(strlen(header) + body_len);
     if (response->content) {
         //Combine header and body
@@ -56,9 +61,10 @@ http_response *get_response_200(FILE *f, char *path) {
     } else {
         fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for *response->content\n");
     }
-    printf("%s\n", response->content);
     free(header);
     free(body);
+    fwrite(response->content, 1, response->len, stdout);
+    printf("%ld\n%ld\n", response->len, body_len);
     return response;
 }
 char *get_response_200_header(char *content_type) {
@@ -92,7 +98,7 @@ char *get_content_type(char *path) {
         return CONTENT_TYPE_OCTET_STREAM;
     }
 }
-char *retrieve_file_contents(FILE *f, long *file_len) {
+char *retrieve_file_contents_text(FILE *f, long *file_len) {
     char *content;
 
     // Analyze the length of the file
@@ -100,11 +106,28 @@ char *retrieve_file_contents(FILE *f, long *file_len) {
     *file_len = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    content = malloc((*file_len * sizeof(char)));
+    content = malloc(*file_len * sizeof(char));
     if (content) {
         fread(content, sizeof(char), *file_len, f);
     } else {
-        fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for *content...\n");
+        fprintf(stderr, "http.c - retrieve_file_contents_text() - malloc failed for *content...\n");
+        return NULL;
+    }
+    return content;
+}
+unsigned char *retrieve_file_contents_binary(FILE *f, long *file_len) {
+    unsigned char *content;
+
+    // Analyze the length of the file
+    fseek(f, 0, SEEK_END);
+    *file_len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    
+    content = malloc(*file_len * sizeof(unsigned char));
+    if (content) {
+        fread(content, sizeof(unsigned char), *file_len, f);
+    } else {
+        fprintf(stderr, "http.c - retrieve_file_contents_binary() - malloc failed for *content...\n");
         return NULL;
     }
     return content;
@@ -112,6 +135,7 @@ char *retrieve_file_contents(FILE *f, long *file_len) {
 http_response *http_response_constructor() {
     http_response *response = malloc(sizeof(http_response));
     response->content = NULL;
+    response->content_type = NULL;
     response->len = 0;
 
     return response;
@@ -119,6 +143,9 @@ http_response *http_response_constructor() {
 void http_response_destructor(http_response *response) {
     if (response->content) {
         free(response->content);
+    }
+    if (response->content_type) {
+        free(response->content_type);
     }
     free(response);
 }

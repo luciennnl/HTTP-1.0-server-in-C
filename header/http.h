@@ -29,19 +29,21 @@ extern char* web_root_path;
 
 struct http_response {
     uint64_t len;
+    char *content_type;
     char *content;
 };
 
 typedef struct http_response http_response;
 
 http_response *http_get(char* req, int reqlen);
-char *http_get_string_adaptor(uint64_t *response_len, char *req, int reqLen);
+void *http_get_string_adaptor(long *response_len, char *req, int reqLen);
 http_response *get_response_404();
 http_response *get_response_200(FILE *f, char *path);
 char *get_response_200_header(char *content_type);
 char *parse_requested_path(char *req, int reqLen);
 char *get_content_type(char *path);
-char *retrieve_file_contents(FILE *f, long *file_len);
+char *retrieve_file_contents_text(FILE *f, long *file_len);
+unsigned char *retrieve_file_contents_binary(FILE *f, long *file_len);
 http_response *http_response_constructor();
 void http_response_destructor(http_response *response);
 #endif
