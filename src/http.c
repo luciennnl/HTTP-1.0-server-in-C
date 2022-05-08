@@ -4,7 +4,7 @@ http_response *http_get(char* req, int reqlen) {
     FILE *f;
     char *path = parse_requested_path(req, reqlen);
     f = fopen(path, "r");
-    if (is_illegal_path(path) || f == NULL) {
+    if (path == NULL || f == NULL) {
         response = get_response_404();
     } else {
         response = get_response_200(f, path);
@@ -77,12 +77,16 @@ char *parse_requested_path(char *req, int reqLen) {
     char request_path[MAXIMUM_REQUEST_PATH_STR_LEN];
     sscanf(req, "GET %s", request_path);
 
+    if (is_illegal_path(request_path)) {
+        free(path);
+        return NULL;
+    }
     snprintf(path, MAXIMUM_PATH_STR_LEN, "%s%s", web_root_path, request_path);
     return path;
 }
 bool is_illegal_path(char* path) {
     char* ret;
-    if ((ret = strstr(path, ILLEGAL_PATH_SUBSTRING))) {
+    if ((ret = strstr(path, ILLEGAL_PATH_SUBSTRING)) != NULL) {
         return true;
     }
     return false;

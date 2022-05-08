@@ -15,7 +15,7 @@
 #define HTTP_RESPONSE_200_HEADER "HTTP/1.0 200 OK\r\nContent-Type: %s\r\n\r\n"
 #define HTTP_RESPONSE_200_HEADER_MAX_LEN 1024
 
-#define ILLEGAL_PATH_SUBSTRING "\\.."
+#define ILLEGAL_PATH_SUBSTRING "/.."
 #define FILE_EXTENSION_HTML ".html"
 #define FILE_EXTENSION_CSS ".css"
 #define FILE_EXTENSION_JPEG ".jpg"

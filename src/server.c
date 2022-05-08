@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 config *read_input(int argc, char *argv[]) {
     if (argc != EXPECTED_INPUT_CNT + 1) {
         fprintf(stderr, "server.c - read_input() - Failed to read input: Expected 3 arguments but got %d\n", (argc-1));
-        exit(0);
+        exit(1);
     }
     
     config *res = malloc(sizeof(config));
@@ -26,7 +26,7 @@ config *read_input(int argc, char *argv[]) {
     int protocol_no = atoi(argv[PROTOCOL_NO_ARG_NO]);
     if (protocol_no != IPV4 && protocol_no != IPV6) {
         fprintf(stderr, "server.c - read_input() - Failed to read input: Expected either 4 (IPV4) or 6 (IPV6) for the first argument\n");
-        exit(0);
+        exit(1);
     }
     res->protocol_no = protocol_no;
     res->port = argv[PORT_ARG_NO];
