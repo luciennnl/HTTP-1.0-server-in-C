@@ -66,7 +66,7 @@ void socket_listen(int listenfd, struct addrinfo *addr) {
         exit(1);
     }
 }
-void socket_handle_messages(int listenfd, int client_max, void *(*response_func)(long*, char*, int)) {
+void socket_handle_messages(int listenfd, int client_max, void *(*response_func)(long*, char*, long)) {
     
     struct sockaddr_storage client_addr;
     int connfd;

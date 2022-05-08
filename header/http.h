@@ -54,7 +54,7 @@ http_response *http_get(char* req, int reqlen);
  * @param reqLen The length of the incoming request
  * @return void* The output response to be sent
  */
-void *http_get_string_adaptor(long *response_len, char *req, int reqLen);
+void *http_get_string_adaptor(long *response_len, char *req, long reqLen);
 /**
  * @brief Function to generate a http response of status 404.
  *        Body will not be populated.

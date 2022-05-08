@@ -12,7 +12,7 @@ http_response *http_get(char* req, int reqlen) {
     free(path);
     return response;
 }
-void *http_get_string_adaptor(long *response_len, char *req, int reqLen) {
+void *http_get_string_adaptor(long *response_len, char *req, long reqLen) {
     http_response *response = http_get(req, reqLen);
     *response_len = response->len;
 
@@ -42,7 +42,7 @@ http_response *get_response_200(FILE *f, char *path) {
     }
     // Get headers
     char *content_type = get_content_type(path);
-    char *header = get_response_200_header(content_type);
+    char *header = get_response_200_headers(content_type);
 
     // Get body
     long body_len;
