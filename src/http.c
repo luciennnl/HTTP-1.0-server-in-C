@@ -67,7 +67,7 @@ http_response *get_response_200(FILE *f, char *path) {
     printf("%ld\n%ld\n", response->len, body_len);
     return response;
 }
-char *get_response_200_header(char *content_type) {
+char *get_response_200_headers(char *content_type) {
     char *header = malloc(HTTP_RESPONSE_200_HEADER_MAX_LEN * sizeof(char));
 
     snprintf(header, HTTP_RESPONSE_200_HEADER_MAX_LEN, HTTP_RESPONSE_200_HEADER, content_type);
