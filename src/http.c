@@ -4,7 +4,7 @@ http_response *http_get(char* req, int reqlen) {
     FILE *f;
     char *path = parse_requested_path(req, reqlen);
     f = fopen(path, "r");
-    if (f == NULL) {
+    if (is_illegal_path(path) || f == NULL) {
         response = get_response_404();
     } else {
         response = get_response_200(f, path);
@@ -31,7 +31,7 @@ http_response *get_response_404() {
     http_response *response = http_response_constructor();
     response->content = malloc(sizeof(HTTP_RESPONSE_404_HEADER));
     response->len = sizeof(HTTP_RESPONSE_404_HEADER);
-    strcpy(response->content, HTTP_RESPONSE_404_HEADER);
+    memcpy(response->content, HTTP_RESPONSE_404_HEADER, response->len);
     return response;
 }
 http_response *get_response_200(FILE *f, char *path) {
@@ -64,7 +64,6 @@ http_response *get_response_200(FILE *f, char *path) {
     free(header);
     free(body);
     fwrite(response->content, 1, response->len, stdout);
-    printf("%ld\n%ld\n", response->len, body_len);
     return response;
 }
 char *get_response_200_headers(char *content_type) {
@@ -80,6 +79,13 @@ char *parse_requested_path(char *req, int reqLen) {
 
     snprintf(path, MAXIMUM_PATH_STR_LEN, "%s%s", web_root_path, request_path);
     return path;
+}
+bool is_illegal_path(char* path) {
+    char* ret;
+    if ((ret = strstr(path, ILLEGAL_PATH_SUBSTRING))) {
+        return true;
+    }
+    return false;
 }
 char *get_content_type(char *path) {
     const char *extension = strrchr(path, '.');

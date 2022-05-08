@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #define MAXIMUM_PATH_STR_LEN 2048
@@ -14,6 +15,7 @@
 #define HTTP_RESPONSE_200_HEADER "HTTP/1.0 200 OK\r\nContent-Type: %s\r\n\r\n"
 #define HTTP_RESPONSE_200_HEADER_MAX_LEN 1024
 
+#define ILLEGAL_PATH_SUBSTRING "\\.."
 #define FILE_EXTENSION_HTML ".html"
 #define FILE_EXTENSION_CSS ".css"
 #define FILE_EXTENSION_JPEG ".jpg"
@@ -102,6 +104,7 @@ char *parse_requested_path(char *req, int reqLen);
  *         - CONTENT_TYPE_OCTET_STREAM "application/octet-stream"
  *              
  */
+bool is_illegal_path(char* path);
 char *get_content_type(char *path);
 /**
  * @brief Function to parse a specified file into an array of unsigned chars. 
