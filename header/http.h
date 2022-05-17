@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#define READ_BUFFER_SIZE 8192
+
 #define MAXIMUM_PATH_STR_LEN 2048
 #define MAXIMUM_REQUEST_PATH_STR_LEN 1024
 #define INITIAL_RESPONSE_BODY_BUFFER_SIZE 1024
@@ -41,10 +43,9 @@ typedef struct http_response http_response;
  * @brief Function for creating a http response from a http request
  * 
  * @param req The incoming http request
- * @param reqlen The length of the incoming request
  * @return http_response* The http response to the request
  */
-http_response *http_get(char* req, int reqlen);
+http_response *http_get(char* req);
 /**
  * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
  *        Wraps around the http_get() function to adhere to the definition of socket_handle_messages()
@@ -53,16 +54,16 @@ http_response *http_get(char* req, int reqlen);
  * 
  * @param response_len The length of the response
  * @param req The incoming request to be handled
- * @param reqLen The length of the incoming request
  * @return void* The output response to be sent
  */
-void *http_get_string_adaptor(long *response_len, char *req, long reqLen);
+void *http_get_string_adaptor(long *response_len, char *req);
 /**
  * @brief Function to generate a http response of status 404.
  *        Body will not be populated.
  * 
  * @return http_response* The generated http_response struct
  */
+char *http_read_adaptor(int connfd);
 http_response *get_response_404();
 /**
  * @brief Function to generate a http response of status 200.
@@ -87,10 +88,9 @@ char *get_response_200_headers(char *content_type);
  *        EG. GET /index.html HTTP/1.0 -> "/index.html"
  * 
  * @param req A string representation of the request
- * @param reqLen The length of the request string
  * @return char* The path to the desired resource specified in the request
  */
-char *parse_requested_path(char *req, int reqLen);
+char *parse_requested_path(char *req);
 /**
  * @brief Function to parse a path to a file and determine the content type.
  *        Determines content-type based on the file extension

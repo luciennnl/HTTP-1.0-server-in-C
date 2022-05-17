@@ -66,26 +66,16 @@ void socket_listen(int listenfd, struct addrinfo *addr) {
         exit(1);
     }
 }
-void socket_handle_messages(int listenfd, int client_max, void *(*response_func)(long*, char*, long)) {
+void socket_handle_messages(int listenfd, int client_max, char *(*read_func)(int), void *(*response_func)(long*, char*)) {
     
     struct sockaddr_storage client_addr;
     int connfd;
-    long request_len, response_len;
     socklen_t client_addr_size = sizeof(client_addr);
-    void *response = NULL;
+    pthread_t t;
     
-    char recvBuffer[8192];
     while (true) {
         connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_addr_size);
-        if ((request_len = read(connfd, recvBuffer, sizeof(recvBuffer)-1)) > 0) {
-            response = response_func(&response_len, recvBuffer, request_len);
-            // If response is empty, something went wrong, don't send
-            if (response != NULL) {
-                send(connfd, response, response_len, 0);
-                // Free the response string
-                free(response);
-            }
-        }
-        close(connfd);
+        worker_args *args = worker_args_constructor(connfd, read_func, response_func);
+        pthread_create(&t, NULL, &socket_worker, args);
     }
 }

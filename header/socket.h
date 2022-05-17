@@ -9,7 +9,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <pthread.h>
 #include <fcntl.h>
+
+#include "./socket_worker.h"
 enum protocol_number {
     IPV4 = 4,
     IPV6 = 6
@@ -59,5 +62,5 @@ void socket_listen(int sockfd, struct addrinfo *addr);
  *                      req: A string containing the request message
  *                      reqLen: A long describing the length of the request message
  */
-void socket_handle_messages(int sockfd, int client_max, void *(*response_func)(long*, char*, long));
+void socket_handle_messages(int sockfd, int client_max, char *(*read_func)(int), void *(*response_func)(long*, char*));
 #endif

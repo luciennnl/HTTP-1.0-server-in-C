@@ -1,8 +1,8 @@
 #include "../header/http.h"
-http_response *http_get(char* req, int reqlen) {
+http_response *http_get(char* req) {
     http_response *response;
     FILE *f;
-    char *path = parse_requested_path(req, reqlen);
+    char *path = parse_requested_path(req);
     f = fopen(path, "r");
     if (path == NULL || f == NULL) {
         response = get_response_404();
@@ -12,8 +12,8 @@ http_response *http_get(char* req, int reqlen) {
     free(path);
     return response;
 }
-void *http_get_string_adaptor(long *response_len, char *req, long reqLen) {
-    http_response *response = http_get(req, reqLen);
+void *http_get_string_adaptor(long *response_len, char *req) {
+    http_response *response = http_get(req);
     *response_len = response->len;
 
     // If response content does not exist, free the response object
@@ -26,6 +26,23 @@ void *http_get_string_adaptor(long *response_len, char *req, long reqLen) {
     memcpy(ret, response->content, response->len);
     http_response_destructor(response);
     return ret;
+}
+char *http_read_adaptor(int connfd) {
+    long nbytes, bytes_read, current_size = 8192;
+    char *message = malloc(READ_BUFFER_SIZE);
+    char buffer[READ_BUFFER_SIZE];
+    char *end_of_header;
+    while ((nbytes = read(connfd, buffer, sizeof(buffer))) > 0) {
+        if (bytes_read + nbytes > current_size) {
+            message = realloc(message, current_size + READ_BUFFER_SIZE);
+        }
+        memcpy(message + bytes_read, buffer, nbytes);
+        bytes_read += nbytes;
+        if ((end_of_header = strstr(buffer, "\r\n\r\n")) != NULL || (end_of_header = strstr(buffer, "\n\n")) != NULL) {
+            break;
+        }
+    }
+    return message;
 }
 http_response *get_response_404() {
     http_response *response = http_response_constructor();
@@ -63,7 +80,6 @@ http_response *get_response_200(FILE *f, char *path) {
     }
     free(header);
     free(body);
-    fwrite(response->content, 1, response->len, stdout);
     return response;
 }
 char *get_response_200_headers(char *content_type) {
@@ -72,7 +88,7 @@ char *get_response_200_headers(char *content_type) {
     snprintf(header, HTTP_RESPONSE_200_HEADER_MAX_LEN, HTTP_RESPONSE_200_HEADER, content_type);
     return header;
 }
-char *parse_requested_path(char *req, int reqLen) {
+char *parse_requested_path(char *req) {
     char *path = malloc(MAXIMUM_PATH_STR_LEN * sizeof(char));
     char request_path[MAXIMUM_REQUEST_PATH_STR_LEN];
     sscanf(req, "GET %s", request_path);

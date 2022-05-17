@@ -3,6 +3,7 @@
 #define SERVER_H
 
 #define IMPLEMENTS_IPV6
+#define MULTITHREADED
 
 #define _POSIX_C_SOURCE 200112L
 #include <netdb.h>
