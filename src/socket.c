@@ -7,6 +7,11 @@ socket_info *socket_init(protocol_number protocol_no, char *port) {
 
     memset(&hints, 0, sizeof(hints));
 
+    /**
+     * This code extract was written with reference to the lecture slides of COMP30023 Semester 1 2022 @ The University of Melbourne
+     * Author: Chris Culnane
+     * Year: 2022
+     */
     // Assign family based on configuration
     hints.ai_family = protocol_no == IPV6 ? AF_INET6 : AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -75,7 +80,13 @@ void socket_handle_messages(int listenfd, int client_max, char *(*read_func)(int
     
     while (true) {
         connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_addr_size);
+        // Create worker_args struct to pass required worker parameters into the thread
         worker_args *args = worker_args_constructor(connfd, read_func, response_func);
-        pthread_create(&t, NULL, &socket_worker, args);
+
+        // Create the thread, we don't need to store the id as it will automatically exit
+        if ((pthread_create(&t, NULL, &socket_worker, args)) != 0) {
+            // Close the connection in the case a thread creation failed
+            close(connfd);
+        }
     }
 }

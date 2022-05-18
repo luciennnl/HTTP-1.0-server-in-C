@@ -1,26 +1,54 @@
 #include "../header/http.h"
 http_response *http_get(char* req) {
+    http_request *request;
     http_response *response;
     FILE *f;
-    char *path = parse_requested_path(req);
+    char *path;
+    
+    if ((request = http_parse_request(req)) == NULL) {
+        return NULL;
+    }
+    path = transform_to_absolute_path(request->resource);
     f = fopen(path, "r");
     if (path == NULL || f == NULL) {
         response = get_response_404();
     } else {
-        response = get_response_200(f, path);
+        response = get_response_200(f, request->resource);
     }
     free(path);
     return response;
 }
+http_request *http_parse_request(char *req) {
+    char *token, *method, *resource;
+    // Check that the first token is GET (Since we don't support any other methods yet)
+    method = strtok(req, WHITESPACE_TOKEN);
+    if (method == NULL || strcmp(method, HTTP_GET) != 0) {
+        return NULL;
+    }
+    // Check that the second token exists and begins with a '/' (The root directory)
+    resource = strtok(NULL, WHITESPACE_TOKEN);
+    if (resource == NULL || resource[0] != '/') {
+        return NULL;
+    }
+    // Check that the last token exists and is some form of "HTTP/*"
+    token = strtok(NULL, WHITESPACE_TOKEN);
+    if (token == NULL || memcmp(token, HTTP_V, sizeof(HTTP_V) - 1) != 0) {
+        return NULL;
+    }
+    return http_request_constructor(method, resource);
+}
 void *http_get_string_adaptor(long *response_len, char *req) {
     http_response *response = http_get(req);
-    *response_len = response->len;
 
+    if (!response) {
+        return NULL;
+    }
     // If response content does not exist, free the response object
     if (!response->content) {
         http_response_destructor(response);
         return NULL;
     }
+    *response_len = response->len;
     void *ret = malloc(response->len);
     // Save the content into its separate string
     memcpy(ret, response->content, response->len);
@@ -32,13 +60,16 @@ char *http_read_adaptor(int connfd) {
     char *message = malloc(READ_BUFFER_SIZE);
     char buffer[READ_BUFFER_SIZE];
     char *end_of_header;
-    while ((nbytes = read(connfd, buffer, sizeof(buffer))) > 0) {
+    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) > 0) {
         if (bytes_read + nbytes > current_size) {
             message = realloc(message, current_size + READ_BUFFER_SIZE);
         }
+        // We use memcpy as strcpy depends on the '\0' character which may not be read
         memcpy(message + bytes_read, buffer, nbytes);
         bytes_read += nbytes;
-        if ((end_of_header = strstr(buffer, "\r\n\r\n")) != NULL || (end_of_header = strstr(buffer, "\n\n")) != NULL) {
+
+        // Check for the end of header indicator as specified in RFC 2616
+        if ((end_of_header = strstr(message, "\r\n\r\n")) != NULL || (end_of_header = strstr(message, "\n\n")) != NULL) {
             break;
         }
     }
@@ -64,6 +95,10 @@ http_response *get_response_200(FILE *f, char *path) {
     // Get body
     long body_len;
     void *body;
+
+    /**
+     * @brief Need to check if content type is JPEG, if so, we need to treat the data as binary rather than text
+     */
     if (strcmp(content_type, CONTENT_TYPE_JPEG) == 0) {
         body = retrieve_file_contents_binary(f, &body_len);
     } else {
@@ -88,16 +123,14 @@ char *get_response_200_headers(char *content_type) {
     snprintf(header, HTTP_RESPONSE_200_HEADER_MAX_LEN, HTTP_RESPONSE_200_HEADER, content_type);
     return header;
 }
-char *parse_requested_path(char *req) {
+char *transform_to_absolute_path(char *resource) {
     char *path = malloc(MAXIMUM_PATH_STR_LEN * sizeof(char));
-    char request_path[MAXIMUM_REQUEST_PATH_STR_LEN];
-    sscanf(req, "GET %s", request_path);
-
-    if (is_illegal_path(request_path)) {
+    if (is_illegal_path(resource)) {
         free(path);
         return NULL;
     }
-    snprintf(path, MAXIMUM_PATH_STR_LEN, "%s%s", web_root_path, request_path);
+    snprintf(path, MAXIMUM_PATH_STR_LEN, "%s%s", web_root_path, resource);
+
     return path;
 }
 bool is_illegal_path(char* path) {
@@ -109,6 +142,7 @@ bool is_illegal_path(char* path) {
 }
 char *get_content_type(char *path) {
     const char *extension = strrchr(path, '.');
+
     if (!extension) {
         return CONTENT_TYPE_OCTET_STREAM;
     }
@@ -174,4 +208,23 @@ void http_response_destructor(http_response *response) {
         free(response->content_type);
     }
     free(response);
+}
+http_request *http_request_constructor(char *method, char *resource) {
+    http_request *request = malloc(sizeof(http_request));
+
+    request->method = malloc(sizeof(method));
+    request->resource = malloc(sizeof(resource));
+    strcpy(request->method, method);
+    strcpy(request->resource, resource);
+
+    return request;
+}
+void http_request_destructor(http_request *request) {
+    if (request->method) {
+        free(request->method);
+    }
+    if (request->resource) {
+        free(request->resource);
+    }
+    free(request);
 }

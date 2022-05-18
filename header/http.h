@@ -1,6 +1,7 @@
 #ifndef HTTP_H
 #define HTTP_H
 
+#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -10,6 +11,10 @@
 
 #define READ_BUFFER_SIZE 8192
 
+#define HTTP_V "HTTP/"
+#define HTTP_GET "GET"
+
+#define WHITESPACE_TOKEN " "
 #define MAXIMUM_PATH_STR_LEN 2048
 #define MAXIMUM_REQUEST_PATH_STR_LEN 1024
 #define INITIAL_RESPONSE_BODY_BUFFER_SIZE 1024
@@ -39,6 +44,13 @@ struct http_response {
 
 typedef struct http_response http_response;
 
+struct http_request {
+    char *method;
+    char *resource;
+    // Would need more properties such as body and headers if we were to implement even more functionalities (eg. allowing POST)
+};
+
+typedef struct http_request http_request;
 /**
  * @brief Function for creating a http response from a http request
  * 
@@ -46,6 +58,13 @@ typedef struct http_response http_response;
  * @return http_response* The http response to the request
  */
 http_response *http_get(char* req);
+/**
+ * @brief Function for parsing a string into a http_request struct
+ * 
+ * @param req The string to parse
+ * @return http_request* a http_request struct if the string is a valid http request, otherwise NULL
+ */
+http_request *http_parse_request(char *req);
 /**
  * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
  *        Wraps around the http_get() function to adhere to the definition of socket_handle_messages()
@@ -56,14 +75,25 @@ http_response *http_get(char* req);
  * @param req The incoming request to be handled
  * @return void* The output response to be sent
  */
+
 void *http_get_string_adaptor(long *response_len, char *req);
+/**
+ * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
+ *        Implements reading of an incoming socket according to the rules defined in RFC 2616 - Hypertext Transfer Protocol
+ *        https://datatracker.ietf.org/doc/html/rfc2616
+ * 
+ *        More specifically, reads until end of header indicated by \r\n\r\n or EOF. (Body is not supported as we only allow GET requests)
+ * 
+ * @param connfd The socket file descriptor to read messages from
+ * @return char* An output string of the message that is read
+ */
+char *http_read_adaptor(int connfd);
 /**
  * @brief Function to generate a http response of status 404.
  *        Body will not be populated.
  * 
  * @return http_response* The generated http_response struct
  */
-char *http_read_adaptor(int connfd);
 http_response *get_response_404();
 /**
  * @brief Function to generate a http response of status 200.
@@ -84,13 +114,21 @@ http_response *get_response_200(FILE *f, char *path);
  */
 char *get_response_200_headers(char *content_type);
 /**
- * @brief Function to extract the path to the requested resource from a http request.
- *        EG. GET /index.html HTTP/1.0 -> "/index.html"
+ * @brief Function to transform a requested path in a HTTP request to an absolute path on the web server.
+ *        Eg. /index.html -> /home/www/index.html
  * 
- * @param req A string representation of the request
+ * @param resource A string containing the requested resource specified in the HTTP request
  * @return char* The path to the desired resource specified in the request
  */
-char *parse_requested_path(char *req);
+char *transform_to_absolute_path(char *resource);
+/**
+ * @brief Function to determine if a provided path is illegal. That is, if it contains the "/.." token.
+ * 
+ * @param path The path to analyze
+ * @return true If the path is illegal
+ * @return false If the path is OK
+ */
+bool is_illegal_path(char* path);
 /**
  * @brief Function to parse a path to a file and determine the content type.
  *        Determines content-type based on the file extension
@@ -104,7 +142,6 @@ char *parse_requested_path(char *req);
  *         - CONTENT_TYPE_OCTET_STREAM "application/octet-stream"
  *              
  */
-bool is_illegal_path(char* path);
 char *get_content_type(char *path);
 /**
  * @brief Function to parse a specified file into an array of unsigned chars. 
@@ -139,4 +176,7 @@ http_response *http_response_constructor();
  * @param response The target http_response struct
  */
 void http_response_destructor(http_response *response);
+
+http_request *http_request_constructor(char *method, char *resource);
+void http_request_destructor(http_request *request);
 #endif

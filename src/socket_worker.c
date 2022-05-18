@@ -11,6 +11,7 @@ void *socket_worker(void *arg) {
     if (args->response_func != NULL) {
         request = args->read_func(args->connfd);
         response = args->response_func(&response_len, request);
+        
         // If response is empty, something went wrong, don't send
         if (response != NULL) {
             send(args->connfd, response, response_len, 0);
@@ -18,8 +19,8 @@ void *socket_worker(void *arg) {
             free(response);
         }
         free(request);
-        close(args->connfd);
     }
+    close(args->connfd);
     return NULL;
 }
 worker_args *worker_args_constructor(int connfd, char *(*read_func)(int), void *(*response_func)(long*, char*)) {
