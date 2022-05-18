@@ -14,8 +14,8 @@ http_response *http_get(char* req) {
         response = get_response_404();
     } else {
         response = get_response_200(f, request->resource);
+        free(path);
     }
-    free(path);
     return response;
 }
 http_request *http_parse_request(char *req) {
@@ -56,10 +56,11 @@ void *http_get_string_adaptor(long *response_len, char *req) {
     return ret;
 }
 char *http_read_adaptor(int connfd) {
-    long nbytes, bytes_read, current_size = 8192;
+    long nbytes, bytes_read = 0, current_size = 8192;
     char *message = malloc(READ_BUFFER_SIZE);
     char buffer[READ_BUFFER_SIZE];
     char *end_of_header;
+
     while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) > 0) {
         if (bytes_read + nbytes > current_size) {
             message = realloc(message, current_size + READ_BUFFER_SIZE);
@@ -67,7 +68,6 @@ char *http_read_adaptor(int connfd) {
         // We use memcpy as strcpy depends on the '\0' character which may not be read
         memcpy(message + bytes_read, buffer, nbytes);
         bytes_read += nbytes;
-
         // Check for the end of header indicator as specified in RFC 2616
         if ((end_of_header = strstr(message, "\r\n\r\n")) != NULL || (end_of_header = strstr(message, "\n\n")) != NULL) {
             break;
@@ -135,9 +135,14 @@ char *transform_to_absolute_path(char *resource) {
     return path;
 }
 bool is_illegal_path(char* path) {
-    char* ret;
-    if ((ret = strstr(path, ILLEGAL_PATH_SUBSTRING)) != NULL) {
-        return true;
+    char* ret = path;
+    while ((ret = strstr(ret, ILLEGAL_PATH_SUBSTRING)) != NULL) {
+        printf("%s\n", ret);
+        char next = ret[strlen(ILLEGAL_PATH_SUBSTRING)];
+        if (next == '\0' || next == '/') {
+            return true;
+        }
+        ret++;
     }
     return false;
 }

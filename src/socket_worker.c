@@ -10,7 +10,6 @@ void *socket_worker(void *arg) {
     if (args->response_func != NULL) {
         request = args->read_func(args->connfd);
         response = args->response_func(&response_len, request);
-        
         // If response is empty, something went wrong, don't send
         if (response != NULL) {
             send(args->connfd, response, response_len, 0);

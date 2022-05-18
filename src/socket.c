@@ -82,7 +82,6 @@ void socket_handle_messages(int listenfd, int client_max, char *(*read_func)(int
         connfd = accept(listenfd, (struct sockaddr*)&client_addr, &client_addr_size);
         // Create worker_args struct to pass required worker parameters into the thread
         worker_args *args = worker_args_constructor(connfd, read_func, response_func);
-
         // Create the thread, we don't need to store the id as it will automatically exit
         if ((pthread_create(&t, NULL, &socket_worker, args)) != 0) {
             // Close the connection in the case a thread creation failed
