@@ -87,6 +87,8 @@ void socket_handle_messages(int listenfd, int client_max, char *(*read_func)(int
         if ((pthread_create(&t, NULL, &socket_worker, args)) != 0) {
             // Close the connection in the case a thread creation failed
             close(connfd);
+        } else {
+            pthread_detach(t);
         }
     }
 }

@@ -1,7 +1,6 @@
 #include "../header/socket_worker.h"
 
 void *socket_worker(void *arg) {
-    printf("one worker\n");
     worker_args *args = arg;
     
     char *request;

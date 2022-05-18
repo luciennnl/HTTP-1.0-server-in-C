@@ -30,4 +30,5 @@ typedef struct config config;
 
 config *read_input(int argc, char *argv[]);
 
+void config_free(config *cfg);
 #endif

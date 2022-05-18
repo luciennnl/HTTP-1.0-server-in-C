@@ -12,7 +12,8 @@ int main(int argc, char *argv[]) {
     close(socket->fd);
 
     socket_free(socket);
-    free(cfg);
+    config_free(cfg);
+
     return 0;
 }
 config *read_input(int argc, char *argv[]) {
@@ -33,4 +34,13 @@ config *read_input(int argc, char *argv[]) {
     res->path_to_web_root = argv[PATH_TO_WEB_ROOT_ARG_NO];
 
     return res;
+}
+void config_free(config *cfg) {
+    if (cfg->port) {
+        free(cfg->port);
+    }
+    if (cfg->path_to_web_root) {
+        free(cfg->path_to_web_root);
+    }
+    free(cfg);
 }

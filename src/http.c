@@ -124,13 +124,14 @@ char *get_response_200_headers(char *content_type) {
     return header;
 }
 char *transform_to_absolute_path(char *resource) {
-    char *path = malloc(MAXIMUM_PATH_STR_LEN * sizeof(char));
+    char *path = malloc(strlen(resource) + strlen(web_root_path) + 1);
     if (is_illegal_path(resource)) {
         free(path);
         return NULL;
     }
-    snprintf(path, MAXIMUM_PATH_STR_LEN, "%s%s", web_root_path, resource);
-
+    memcpy(path, web_root_path, strlen(web_root_path));
+    memcpy(path + strlen(web_root_path), resource, strlen(resource));
+    path[strlen(web_root_path) + strlen(resource)] = '\0';
     return path;
 }
 bool is_illegal_path(char* path) {
@@ -212,8 +213,8 @@ void http_response_destructor(http_response *response) {
 http_request *http_request_constructor(char *method, char *resource) {
     http_request *request = malloc(sizeof(http_request));
 
-    request->method = malloc(sizeof(method));
-    request->resource = malloc(sizeof(resource));
+    request->method = malloc(strlen(method) + 1);
+    request->resource = malloc(strlen(resource) + 1);
     strcpy(request->method, method);
     strcpy(request->resource, resource);
 
