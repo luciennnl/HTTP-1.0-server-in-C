@@ -11,7 +11,7 @@
 
 #define READ_BUFFER_SIZE 8192
 
-#define HTTP_V "HTTP/"
+#define HTTP_V "HTTP/1."
 #define HTTP_GET "GET"
 
 #define WHITESPACE_TOKEN " "
@@ -143,24 +143,16 @@ bool is_illegal_path(char* path);
  *              
  */
 char *get_content_type(char *path);
+
 /**
- * @brief Function to parse a specified file into an array of unsigned chars. 
- *        Use this function when parsing normal text files.
- * 
- * @param f a FILE pointer to the target file to be parsed
- * @param file_len a pointer to a long used to store the length of the parsed file
- * @return char* The output of the parsed file
- */
-char *retrieve_file_contents_text(FILE *f, long *file_len);
-/**
- * @brief Function to parse a specified file into an array of unsigned chars. 
- *        Use this function when parsing binary files as unsigned char better supports the storage of binary data.
+ * @brief Function to parse a specified file into an array of chars. 
+ *        INFO: You can use this function to parse both text and binary data
  * 
  * @param f a FILE pointer to the target file to be parsed
  * @param file_len a pointer to a long used to store the length of the parsed file
  * @return unsigned char* The output of the parsed file
  */
-unsigned char *retrieve_file_contents_binary(FILE *f, long *file_len);
+char *retrieve_file_contents(FILE *f, long *file_len);
 /**
  * @brief Function to create a http_response struct, with default values of:
  *      len: 0

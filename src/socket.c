@@ -5,6 +5,10 @@ socket_info *socket_init(protocol_number protocol_no, char *port) {
     socket_info *out = malloc(sizeof(socket_info));
     struct addrinfo hints;
 
+    if (!out) {
+        fprintf(stderr, "http.c - socket_init()- malloc failed for socket_info\n");
+        exit(1);
+    }
     memset(&hints, 0, sizeof(hints));
 
     /**
@@ -66,6 +70,7 @@ void socket_listen(int listenfd, struct addrinfo *addr) {
         fprintf(stderr, "server.c - socket_listen() - Failed to bind socket, exiting...\n");
         exit(1);
     };
+    free(addr);
     if (listen(listenfd, SOCKET_BACKLOG) != 0) {
         fprintf(stderr, "server.c - socket_listen() - Failed to listen socket, exiting...\n");
         exit(1);

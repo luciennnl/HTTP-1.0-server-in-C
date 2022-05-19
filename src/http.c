@@ -49,11 +49,15 @@ void *http_get_string_adaptor(long *response_len, char *req) {
         return NULL;
     }
     *response_len = response->len;
-    void *ret = malloc(response->len);
+    void *full_response = malloc(response->len);
+    if (!full_response) {
+        fprintf(stderr, "http.c - http_get_string_adaptor() - malloc failed for void *full_response\n");
+        exit(1);
+    }
     // Save the content into its separate string
-    memcpy(ret, response->content, response->len);
+    memcpy(full_response, response->content, response->len);
     http_response_destructor(response);
-    return ret;
+    return full_response;
 }
 char *http_read_adaptor(int connfd) {
     long nbytes, bytes_read = 0, current_size = 8192;
@@ -61,9 +65,21 @@ char *http_read_adaptor(int connfd) {
     char buffer[READ_BUFFER_SIZE];
     char *end_of_header;
 
-    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) > 0) {
+    if (!message) {
+        fprintf(stderr, "http.c - http_read_adaptor() - malloc failed for char *message\n");
+        exit(1);
+    }
+    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) != -1) {
+        if (nbytes == 0) {
+            break;
+        }
         if (bytes_read + nbytes > current_size) {
             message = realloc(message, current_size + READ_BUFFER_SIZE);
+
+            if (!message) {
+                fprintf(stderr, "http.c - http_read_adaptor() - realloc failed for *message\n");
+                exit(1);
+            }
         }
         // We use memcpy as strcpy depends on the '\0' character which may not be read
         memcpy(message + bytes_read, buffer, nbytes);
@@ -78,6 +94,10 @@ char *http_read_adaptor(int connfd) {
 http_response *get_response_404() {
     http_response *response = http_response_constructor();
     response->content = malloc(sizeof(HTTP_RESPONSE_404_HEADER));
+    if (!response->content) {
+        fprintf(stderr, "http.c - get_response_404() - malloc failed for http_response->content\n");
+        exit(1);
+    }
     response->len = sizeof(HTTP_RESPONSE_404_HEADER);
     memcpy(response->content, HTTP_RESPONSE_404_HEADER, response->len);
     return response;
@@ -85,7 +105,7 @@ http_response *get_response_404() {
 http_response *get_response_200(FILE *f, char *path) {
     http_response *response = http_response_constructor();
     if (!response) {
-        fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for *response...\n");
+        fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for http_response...\n");
         return NULL;
     }
     // Get headers
@@ -99,11 +119,7 @@ http_response *get_response_200(FILE *f, char *path) {
     /**
      * @brief Need to check if content type is JPEG, if so, we need to treat the data as binary rather than text
      */
-    if (strcmp(content_type, CONTENT_TYPE_JPEG) == 0) {
-        body = retrieve_file_contents_binary(f, &body_len);
-    } else {
-        body = retrieve_file_contents_text(f, &body_len);
-    }
+    body = retrieve_file_contents(f, &body_len);
     response->content = malloc(strlen(header) + body_len);
     if (response->content) {
         //Combine header and body
@@ -111,7 +127,8 @@ http_response *get_response_200(FILE *f, char *path) {
         memcpy(response->content+strlen(header), body, body_len);
         response->len = strlen(header) + body_len;
     } else {
-        fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for *response->content\n");
+        fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for http_response->content\n");
+        exit(1);
     }
     free(header);
     free(body);
@@ -119,12 +136,19 @@ http_response *get_response_200(FILE *f, char *path) {
 }
 char *get_response_200_headers(char *content_type) {
     char *header = malloc(HTTP_RESPONSE_200_HEADER_MAX_LEN * sizeof(char));
-
+    if (!header) {
+        fprintf(stderr, "http.c - get_response_200_headers() - malloc failed for char *header\n");
+        exit(1);
+    }
     snprintf(header, HTTP_RESPONSE_200_HEADER_MAX_LEN, HTTP_RESPONSE_200_HEADER, content_type);
     return header;
 }
 char *transform_to_absolute_path(char *resource) {
     char *path = malloc(strlen(resource) + strlen(web_root_path) + 1);
+    if (!path) {
+        fprintf(stderr, "http.c - transform_to_absolute_path() - malloc failed for char *path\n");
+        exit(1);
+    }
     if (is_illegal_path(resource)) {
         free(path);
         return NULL;
@@ -164,42 +188,28 @@ char *get_content_type(char *path) {
         return CONTENT_TYPE_OCTET_STREAM;
     }
 }
-char *retrieve_file_contents_text(FILE *f, long *file_len) {
+char *retrieve_file_contents(FILE *f, long *file_len) {
     char *content;
 
     // Analyze the length of the file
     fseek(f, 0, SEEK_END);
     *file_len = ftell(f);
     fseek(f, 0, SEEK_SET);
-
+    
     content = malloc(*file_len * sizeof(char));
     if (content) {
         fread(content, sizeof(char), *file_len, f);
     } else {
-        fprintf(stderr, "http.c - retrieve_file_contents_text() - malloc failed for *content...\n");
-        return NULL;
-    }
-    return content;
-}
-unsigned char *retrieve_file_contents_binary(FILE *f, long *file_len) {
-    unsigned char *content;
-
-    // Analyze the length of the file
-    fseek(f, 0, SEEK_END);
-    *file_len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    
-    content = malloc(*file_len * sizeof(unsigned char));
-    if (content) {
-        fread(content, sizeof(unsigned char), *file_len, f);
-    } else {
-        fprintf(stderr, "http.c - retrieve_file_contents_binary() - malloc failed for *content...\n");
-        return NULL;
+        fprintf(stderr, "http.c - retrieve_file_contents_binary() - malloc failed for char *content...\n");
+        exit(1);
     }
     return content;
 }
 http_response *http_response_constructor() {
     http_response *response = malloc(sizeof(http_response));
+    if (!response) {
+        fprintf(stderr, "http.c - http_response_constructor() - malloc failed for http_response\n");
+    }
     response->content = NULL;
     response->content_type = NULL;
     response->len = 0;
@@ -217,9 +227,20 @@ void http_response_destructor(http_response *response) {
 }
 http_request *http_request_constructor(char *method, char *resource) {
     http_request *request = malloc(sizeof(http_request));
-
+    if (!request) {
+        fprintf(stderr, "http.c - http_request_constructor() - malloc failed for http_request\n");
+        exit(1);
+    }
     request->method = malloc(strlen(method) + 1);
+    if (!request->method) {
+        fprintf(stderr, "http.c - http_request_constructor()- malloc failed for http_request->method\n");
+        exit(1);
+    }
     request->resource = malloc(strlen(resource) + 1);
+    if (!request->resource) {
+        fprintf(stderr, "http.c - http_request_constructor()- malloc failed for http_request->resource\n");
+        exit(1);
+    }
     strcpy(request->method, method);
     strcpy(request->resource, resource);
 

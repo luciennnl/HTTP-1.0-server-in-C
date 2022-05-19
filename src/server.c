@@ -23,16 +23,42 @@ config *read_input(int argc, char *argv[]) {
     }
     
     config *res = malloc(sizeof(config));
-    
+    if (!res) {
+        fprintf(stderr, "server.c - read_input()- malloc failed for config\n");
+        exit(1);
+    }
     int protocol_no = atoi(argv[PROTOCOL_NO_ARG_NO]);
     if (protocol_no != IPV4 && protocol_no != IPV6) {
         fprintf(stderr, "server.c - read_input() - Failed to read input: Expected either 4 (IPV4) or 6 (IPV6) for the first argument\n");
         exit(1);
     }
     res->protocol_no = protocol_no;
-    res->port = argv[PORT_ARG_NO];
-    res->path_to_web_root = argv[PATH_TO_WEB_ROOT_ARG_NO];
+    res->port = malloc(strlen(argv[PORT_ARG_NO]) + 1);
+    if (!res->port) {
+        fprintf(stderr, "server.c - read_input() - Malloc failed for config->port");
+        exit(1);
+    }
+    memcpy(res->port, argv[PORT_ARG_NO], strlen(argv[PORT_ARG_NO]) + 1);
 
+    
+    char* path_to_web_root = argv[PATH_TO_WEB_ROOT_ARG_NO];
+
+    res->path_to_web_root = malloc(strlen(path_to_web_root) + 1);
+    if (!res->path_to_web_root) {
+        fprintf(stderr, "server.c - read_input() - Malloc failed for config->path_to_web_root");
+        exit(1);
+    }
+
+    /**
+     * @brief Need to perform different string manipulations depending on if the last character is a '/'
+     */
+    if (path_to_web_root[strlen(path_to_web_root) - 1] == '/') {
+        
+        memcpy(res->path_to_web_root, path_to_web_root, strlen(path_to_web_root) - 1);
+        res->path_to_web_root[strlen(path_to_web_root)] = '\0';
+    } else {
+        memcpy(res->path_to_web_root, path_to_web_root, strlen(path_to_web_root) + 1);
+    }
     return res;
 }
 void config_free(config *cfg) {
