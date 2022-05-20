@@ -17,12 +17,15 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 config *read_input(int argc, char *argv[]) {
+    // Check additional arguments is count 3
     if (argc != EXPECTED_INPUT_CNT + 1) {
         fprintf(stderr, "server.c - read_input() - Failed to read input: Expected 3 arguments but got %d\n", (argc-1));
         exit(1);
     }
     
     config *res = malloc(sizeof(config));
+
+    // Parse arguments into config struct
     if (!res) {
         fprintf(stderr, "server.c - read_input()- malloc failed for config\n");
         exit(1);
@@ -40,7 +43,6 @@ config *read_input(int argc, char *argv[]) {
     }
     memcpy(res->port, argv[PORT_ARG_NO], strlen(argv[PORT_ARG_NO]) + 1);
 
-    
     char* path_to_web_root = argv[PATH_TO_WEB_ROOT_ARG_NO];
 
     res->path_to_web_root = malloc(strlen(path_to_web_root) + 1);

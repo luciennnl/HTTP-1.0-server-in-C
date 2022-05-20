@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -pthread
 EXE=server
-EXE_DEPS=server.o socket.o http.o socket_worker.o
+EXE_DEPS=server.o socket.o http.o socket_worker.o socket_worker_adaptor_http.o
 
 HEADER_DIR = ./header
 BUILD_DIR = ./build

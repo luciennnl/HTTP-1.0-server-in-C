@@ -37,60 +37,6 @@ http_request *http_parse_request(char *req) {
     }
     return http_request_constructor(method, resource);
 }
-void *http_get_string_adaptor(long *response_len, char *req) {
-    http_response *response = http_get(req);
-
-    if (!response) {
-        return NULL;
-    }
-    // If response content does not exist, free the response object
-    if (!response->content) {
-        http_response_destructor(response);
-        return NULL;
-    }
-    *response_len = response->len;
-    void *full_response = malloc(response->len);
-    if (!full_response) {
-        fprintf(stderr, "http.c - http_get_string_adaptor() - malloc failed for void *full_response\n");
-        exit(1);
-    }
-    // Save the content into its separate string
-    memcpy(full_response, response->content, response->len);
-    http_response_destructor(response);
-    return full_response;
-}
-char *http_read_adaptor(int connfd) {
-    long nbytes, bytes_read = 0, current_size = 8192;
-    char *message = malloc(READ_BUFFER_SIZE);
-    char buffer[READ_BUFFER_SIZE];
-    char *end_of_header;
-
-    if (!message) {
-        fprintf(stderr, "http.c - http_read_adaptor() - malloc failed for char *message\n");
-        exit(1);
-    }
-    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) != -1) {
-        if (nbytes == 0) {
-            break;
-        }
-        if (bytes_read + nbytes > current_size) {
-            message = realloc(message, current_size + READ_BUFFER_SIZE);
-
-            if (!message) {
-                fprintf(stderr, "http.c - http_read_adaptor() - realloc failed for *message\n");
-                exit(1);
-            }
-        }
-        // We use memcpy as strcpy depends on the '\0' character which may not be read
-        memcpy(message + bytes_read, buffer, nbytes);
-        bytes_read += nbytes;
-        // Check for the end of header indicator as specified in RFC 2616
-        if ((end_of_header = strstr(message, "\r\n\r\n")) != NULL || (end_of_header = strstr(message, "\n\n")) != NULL) {
-            break;
-        }
-    }
-    return message;
-}
 http_response *get_response_404() {
     http_response *response = http_response_constructor();
     response->content = malloc(sizeof(HTTP_RESPONSE_404_HEADER));
@@ -149,10 +95,12 @@ char *transform_to_absolute_path(char *resource) {
         fprintf(stderr, "http.c - transform_to_absolute_path() - malloc failed for char *path\n");
         exit(1);
     }
+    // Check if path is illegal first
     if (is_illegal_path(resource)) {
         free(path);
         return NULL;
     }
+    // Combine web root path with resource path
     memcpy(path, web_root_path, strlen(web_root_path));
     memcpy(path + strlen(web_root_path), resource, strlen(resource));
     path[strlen(web_root_path) + strlen(resource)] = '\0';
@@ -161,7 +109,6 @@ char *transform_to_absolute_path(char *resource) {
 bool is_illegal_path(char* path) {
     char* ret = path;
     while ((ret = strstr(ret, ILLEGAL_PATH_SUBSTRING)) != NULL) {
-        printf("%s\n", ret);
         char next = ret[strlen(ILLEGAL_PATH_SUBSTRING)];
         if (next == '\0' || next == '/') {
             return true;
@@ -173,9 +120,11 @@ bool is_illegal_path(char* path) {
 char *get_content_type(char *path) {
     const char *extension = strrchr(path, '.');
 
+    // If no extension, return application/octet-stream as specified in the specifications
     if (!extension) {
         return CONTENT_TYPE_OCTET_STREAM;
     }
+    // Otherwise, try matching the extension with the defined values
     if (strcmp(extension, FILE_EXTENSION_HTML) == 0) {
         return CONTENT_TYPE_HTML;
     } else if (strcmp(extension, FILE_EXTENSION_CSS) == 0) {
