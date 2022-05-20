@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#define HTTP_V "HTTP/1."
+#define HTTP_V "HTTP/1.1"
 #define HTTP_GET "GET"
 
 #define WHITESPACE_TOKEN " "

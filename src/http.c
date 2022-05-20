@@ -30,9 +30,17 @@ http_request *http_parse_request(char *req) {
     if (resource == NULL || resource[0] != '/') {
         return NULL;
     }
-    // Check that the last token exists and is some form of "HTTP/*"
+    // Check that the last token exists and is HTTP/1.0 as this is the only version we accept"
+    /**
+     * @brief We will need to perform this check in multiple iterations. First we need to check token exists.
+     * Second we need to check that the token begins with HTTP/1.0.
+     * Finally, we need to check that there is no additional text beyond apart from \r\n to indicate the end of the first header.
+     */
     token = strtok(NULL, WHITESPACE_TOKEN);
-    if (token == NULL || memcmp(token, HTTP_V, sizeof(HTTP_V) - 1) != 0) {
+    if (token == NULL 
+        || strlen(token) < (strlen(HTTP_V) + strlen("\r\n")) 
+        || memcmp(token, HTTP_V, strlen(HTTP_V)) != 0 
+        || memcmp(token + strlen(HTTP_V), "\r\n", strlen("\r\n")) != 0) {
         return NULL;
     }
     return http_request_constructor(method, resource);
