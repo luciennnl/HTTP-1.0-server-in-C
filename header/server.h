@@ -14,6 +14,7 @@
 
 #include "./socket.h"
 #include "./http.h"
+#include "./socket_worker_adaptor_http.h"
 
 #define EXPECTED_INPUT_CNT 3
 #define PROTOCOL_NO_ARG_NO 1
