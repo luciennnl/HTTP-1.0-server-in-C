@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#define HTTP_V "HTTP/1.1"
+#define HTTP_V "HTTP/1.0"
 #define HTTP_GET "GET"
 
 #define WHITESPACE_TOKEN " "
@@ -125,7 +125,6 @@ bool is_illegal_path(char* path);
  *              
  */
 char *get_content_type(char *path);
-
 
 /**
  * @brief Function to parse a specified file into an array of chars. 
