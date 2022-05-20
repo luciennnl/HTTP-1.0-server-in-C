@@ -11,7 +11,7 @@
 
 #define READ_BUFFER_SIZE 8192
 
-#define HTTP_V "HTTP/1."
+#define HTTP_V "HTTP/1.0"
 #define HTTP_GET "GET"
 
 #define WHITESPACE_TOKEN " "
@@ -51,6 +51,7 @@ struct http_request {
 };
 
 typedef struct http_request http_request;
+
 /**
  * @brief Function for creating a http response from a http request
  * 
@@ -58,6 +59,7 @@ typedef struct http_request http_request;
  * @return http_response* The http response to the request
  */
 http_response *http_get(char* req);
+
 /**
  * @brief Function for parsing a string into a http_request struct
  * 
@@ -65,6 +67,7 @@ http_response *http_get(char* req);
  * @return http_request* a http_request struct if the string is a valid http request, otherwise NULL
  */
 http_request *http_parse_request(char *req);
+
 /**
  * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
  *        Wraps around the http_get() function to adhere to the definition of socket_handle_messages()
@@ -75,8 +78,8 @@ http_request *http_parse_request(char *req);
  * @param req The incoming request to be handled
  * @return void* The output response to be sent
  */
-
 void *http_get_string_adaptor(long *response_len, char *req);
+
 /**
  * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
  *        Implements reading of an incoming socket according to the rules defined in RFC 2616 - Hypertext Transfer Protocol
@@ -88,6 +91,7 @@ void *http_get_string_adaptor(long *response_len, char *req);
  * @return char* An output string of the message that is read
  */
 char *http_read_adaptor(int connfd);
+
 /**
  * @brief Function to generate a http response of status 404.
  *        Body will not be populated.
@@ -95,6 +99,7 @@ char *http_read_adaptor(int connfd);
  * @return http_response* The generated http_response struct
  */
 http_response *get_response_404();
+
 /**
  * @brief Function to generate a http response of status 200.
  *        Headers will be populated based on get_response_200_headers
@@ -105,6 +110,7 @@ http_response *get_response_404();
  * @return http_response* The generated http_response struct
  */
 http_response *get_response_200(FILE *f, char *path);
+
 /**
  * @brief Function to generate a http status 200 response header.
  *        INFO: Currently only supports the HTTP Status & Content-Type headers.
@@ -113,6 +119,7 @@ http_response *get_response_200(FILE *f, char *path);
  * @return char* The generated http status 200 response headers
  */
 char *get_response_200_headers(char *content_type);
+
 /**
  * @brief Function to transform a requested path in a HTTP request to an absolute path on the web server.
  *        Eg. /index.html -> /home/www/index.html
@@ -121,6 +128,7 @@ char *get_response_200_headers(char *content_type);
  * @return char* The path to the desired resource specified in the request
  */
 char *transform_to_absolute_path(char *resource);
+
 /**
  * @brief Function to determine if a provided path is illegal. That is, if it contains the "/.." token.
  * 
@@ -129,6 +137,7 @@ char *transform_to_absolute_path(char *resource);
  * @return false If the path is OK
  */
 bool is_illegal_path(char* path);
+
 /**
  * @brief Function to parse a path to a file and determine the content type.
  *        Determines content-type based on the file extension
@@ -144,6 +153,7 @@ bool is_illegal_path(char* path);
  */
 char *get_content_type(char *path);
 
+
 /**
  * @brief Function to parse a specified file into an array of chars. 
  *        INFO: You can use this function to parse both text and binary data
@@ -153,6 +163,7 @@ char *get_content_type(char *path);
  * @return unsigned char* The output of the parsed file
  */
 char *retrieve_file_contents(FILE *f, long *file_len);
+
 /**
  * @brief Function to create a http_response struct, with default values of:
  *      len: 0
@@ -162,6 +173,7 @@ char *retrieve_file_contents(FILE *f, long *file_len);
  * @return http_response* The created http_response struct 
  */
 http_response *http_response_constructor();
+
 /**
  * @brief Function to free a http_response struct including any of the strings contained within.
  * 
@@ -169,6 +181,20 @@ http_response *http_response_constructor();
  */
 void http_response_destructor(http_response *response);
 
+/**
+ * @brief Function to create a http_request struct, with a specified method indicating the HTTP method (GET/POST/PUT...)
+ *        and a resource indicating the path of the requested resource as specified in the second argument of the first line: eg. "/index.html"
+ * 
+ * @param method The HTTP method
+ * @param resource The path of the requested resource
+ * @return http_request* The created http_request struct
+ */
 http_request *http_request_constructor(char *method, char *resource);
+
+/**
+ * @brief Function to free a http_request struct including any of the strings contained within
+ * 
+ * @param request The http_request struct to free
+ */
 void http_request_destructor(http_request *request);
 #endif

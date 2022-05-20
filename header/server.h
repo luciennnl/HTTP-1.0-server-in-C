@@ -28,7 +28,19 @@ struct config {
 
 typedef struct config config;
 
+/**
+ * @brief Function to read command line arguments into a config struct
+ *        INFO: Will exit on unexpected or malformed input.
+ * @param argc The amount of arguments
+ * @param argv An array of strings containing the arguments
+ * @return config* The constructed config struct
+ */
 config *read_input(int argc, char *argv[]);
 
+/**
+ * @brief Function to free a config struct
+ * 
+ * @param cfg A pointer to the config struct to free
+ */
 void config_free(config *cfg);
 #endif
