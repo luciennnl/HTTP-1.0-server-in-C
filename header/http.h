@@ -93,6 +93,13 @@ http_response *get_response_404();
  */
 http_response *get_response_200(FILE *f, char *path);
 
+/**
+ * @brief Function to insert a http_response_header into the headers property in a http_response struct object
+ * 
+ * @param http_response The http_response to insert the header
+ * @param name The name of the header
+ * @param value The value of the header
+ */
 void insert_response_header(http_response *http_response, char *name, char *value);
 /**
  * @brief Function to transform a requested path in a HTTP request to an absolute path on the web server.
@@ -136,7 +143,13 @@ char *get_content_type(char *path);
  * @return unsigned char* The output of the parsed file
  */
 char *retrieve_file_contents(FILE *f, long *file_len);
-
+/**
+ * @brief Function to get the length of a http_response when converted to raw bytes
+ * 
+ * @param response The http_response to analyze
+ * @return long The length of the given http_response
+ */
+long http_response_length(http_response *response);
 /**
  * @brief Function to create a http_response struct, with default values of:
  *      len: 0
@@ -154,7 +167,19 @@ http_response *http_response_constructor();
  */
 void http_response_destructor(http_response *response);
 
+/**
+ * @brief Function to create a http_response_header struct
+ * 
+ * @param name The name of the header. Eg. (Host, User-Agent, Connection);
+ * @param value The value of the header. Eg. (www.example.com, Mozilla/5.0, close)
+ * @return http_response_header* The created http_response_header
+ */
 http_response_header *http_response_header_constructor(char *name, char *value);
+/**
+ * @brief Function to free a http_response_header struct
+ * 
+ * @param response_header The http_response_header to free
+ */
 void http_response_header_destructor(http_response_header *response_header);
 /**
  * @brief Function to create a http_request struct, with a specified method indicating the HTTP method (GET/POST/PUT...)

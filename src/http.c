@@ -147,6 +147,20 @@ char *retrieve_file_contents(FILE *f, long *file_len) {
     }
     return content;
 }
+long http_response_length(http_response *response) {
+    long response_len = 0;
+    http_response_header *header = response->headers;
+
+    // Length of response = length of all headers + length of status line + end of header indicator + body length
+    response_len += strlen(response->status_line) + (strlen(HTTP_HEADER_SEPARATOR) * 2) + response->body_len;
+    while (header != NULL) {
+        response_len += strlen(header->name) + strlen(HTTP_HEADER_KEY_VALUE_SEPARATOR) + strlen(header->value) 
+            + strlen(HTTP_HEADER_SEPARATOR);
+        header = header->next;
+    }
+
+    return response_len;
+}
 http_response *http_response_constructor(char *status_line) {
     http_response *response = malloc(sizeof(http_response));
     if (!response) {

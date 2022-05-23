@@ -21,14 +21,9 @@ char *http_response_to_char_array(http_response *response, long *response_len) {
     http_response_header *header = response->headers;
 
     // Length of response = length of all headers + length of status line + end of header indicator + body length
-    _response_len += strlen(response->status_line) + (strlen(HTTP_HEADER_SEPARATOR) * 2) + response->body_len;
-    while (header != NULL) {
-        _response_len += strlen(header->name) + strlen(HTTP_HEADER_KEY_VALUE_SEPARATOR) + strlen(header->value) 
-            + strlen(HTTP_HEADER_SEPARATOR);
-        header = header->next;
-    }
+    *response_len = http_response_length(response);
     
-    raw_response = malloc(_response_len);
+    raw_response = malloc(*response_len);
     if (!raw_response) {
         fprintf(stderr, "http.c - http_response_to_char_array() - malloc failed for raw_response\n");
         exit(1);
@@ -55,7 +50,6 @@ char *http_response_to_char_array(http_response *response, long *response_len) {
     if (response->body_len > 0) {
         memcpy(raw_response + offset, response->body, response->body_len);
     }
-    *response_len = _response_len;
     return raw_response;
 }
 void memcpy_offset_strlen_helper(long *offset, void *dest, void *src) {
