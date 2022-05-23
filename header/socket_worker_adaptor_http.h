@@ -22,6 +22,7 @@
  */
 void *http_get_string_adaptor(long *response_len, char *req);
 
+char *http_response_to_char_array(http_response *response, long *response_len);
 /**
  * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
  *        Implements reading of an incoming socket according to the rules defined in RFC 2616 - Hypertext Transfer Protocol

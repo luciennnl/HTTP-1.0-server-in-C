@@ -8,16 +8,20 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#define HTTP_V "HTTP/1.0"
+#define HTTP_V "HTTP/1.1"
 #define HTTP_GET "GET"
 
 #define WHITESPACE_TOKEN " "
 #define MAXIMUM_PATH_STR_LEN 2048
 #define MAXIMUM_REQUEST_PATH_STR_LEN 1024
 #define INITIAL_RESPONSE_BODY_BUFFER_SIZE 1024
-#define HTTP_RESPONSE_404_HEADER "HTTP/1.0 404 Not Found\r\n\r\n"
-#define HTTP_RESPONSE_200_HEADER "HTTP/1.0 200 OK\r\nContent-Type: %s\r\n\r\n"
+#define HTTP_RESPONSE_404_STATUS_LINE "HTTP/1.0 404 Not Found"
+#define HTTP_RESPONSE_200_STATUS_LINE "HTTP/1.0 200 OK"
+#define HTTP_RESPONSE_CONTENT_TYPE_HEADER "Content-Type"
 #define HTTP_RESPONSE_200_HEADER_MAX_LEN 1024
+
+#define HTTP_HEADER_SEPARATOR "\r\n"
+#define HTTP_HEADER_KEY_VALUE_SEPARATOR ": "
 
 #define ILLEGAL_PATH_SUBSTRING "/.."
 #define FILE_EXTENSION_HTML ".html"
@@ -33,10 +37,19 @@
 
 extern char* web_root_path;
 
+struct http_response_header {
+    char *name;
+    char *value;
+    struct http_response_header *next;
+};
+
+typedef struct http_response_header http_response_header;
+
 struct http_response {
-    uint64_t len;
-    char *content_type;
-    char *content;
+    http_response_header *headers;
+    char *status_line;
+    char *body;
+    long body_len;
 };
 
 typedef struct http_response http_response;
@@ -84,15 +97,7 @@ http_response *get_response_404();
  */
 http_response *get_response_200(FILE *f, char *path);
 
-/**
- * @brief Function to generate a http status 200 response header.
- *        INFO: Currently only supports the HTTP Status & Content-Type headers.
- * 
- * @param content_type The Content-Type header value
- * @return char* The generated http status 200 response headers
- */
-char *get_response_200_headers(char *content_type);
-
+void insert_response_header(http_response *http_response, char *name, char *value);
 /**
  * @brief Function to transform a requested path in a HTTP request to an absolute path on the web server.
  *        Eg. /index.html -> /home/www/index.html
@@ -153,6 +158,8 @@ http_response *http_response_constructor();
  */
 void http_response_destructor(http_response *response);
 
+http_response_header *http_response_header_constructor(char *name, char *value);
+void http_response_header_destructor(http_response_header *response_header);
 /**
  * @brief Function to create a http_request struct, with a specified method indicating the HTTP method (GET/POST/PUT...)
  *        and a resource indicating the path of the requested resource as specified in the second argument of the first line: eg. "/index.html"

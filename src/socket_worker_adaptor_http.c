@@ -5,21 +5,66 @@ void *http_get_string_adaptor(long *response_len, char *req) {
     if (!response) {
         return NULL;
     }
-    // If response content does not exist, free the response object
-    if (!response->content) {
-        http_response_destructor(response);
+
+    char *raw_response = http_response_to_char_array(response, response_len);
+    http_response_destructor(response);
+    return raw_response;
+}
+char *http_response_to_char_array(http_response *response, long *response_len) {
+    char *raw_response;
+    long _response_len = 0;
+    long offset = 0;
+    
+    if (!response) {
         return NULL;
     }
-    *response_len = response->len;
-    void *full_response = malloc(response->len);
-    if (!full_response) {
-        fprintf(stderr, "http.c - http_get_string_adaptor() - malloc failed for void *full_response\n");
+    http_response_header *header = response->headers;
+
+    // Length of response = length of all headers + length of status line + end of header indicator + body length
+    _response_len += strlen(response->status_line) + (strlen(HTTP_HEADER_SEPARATOR) * 2) + response->body_len;
+    while (header != NULL) {
+        _response_len += strlen(header->name) 
+            + strlen(HTTP_HEADER_KEY_VALUE_SEPARATOR) 
+            + strlen(header->value) 
+            + strlen(HTTP_HEADER_SEPARATOR);
+        header = header->next;
+    }
+    
+    raw_response = malloc(_response_len);
+    if (!raw_response) {
+        fprintf(stderr, "http.c - http_response_to_char_array() - malloc failed for raw_response\n");
         exit(1);
     }
-    // Save the content into its separate string
-    memcpy(full_response, response->content, response->len);
-    http_response_destructor(response);
-    return full_response;
+    /**
+     * @brief Get http status line
+     */
+    memcpy(raw_response, response->status_line, strlen(response->status_line));
+    offset += strlen(response->status_line);
+    memcpy(raw_response + offset, HTTP_HEADER_SEPARATOR, strlen(HTTP_HEADER_SEPARATOR));
+    offset += strlen(HTTP_HEADER_SEPARATOR);
+
+    /**
+     * @brief Get headers
+     */
+    header = response->headers;
+    while (header != NULL) {
+        memcpy(raw_response + offset, header->name, strlen(header->name));
+        offset += strlen(header->name);
+        memcpy(raw_response + offset, HTTP_HEADER_KEY_VALUE_SEPARATOR, strlen(HTTP_HEADER_KEY_VALUE_SEPARATOR));
+        offset += strlen(HTTP_HEADER_KEY_VALUE_SEPARATOR);
+        memcpy(raw_response + offset, header->value, strlen(header->value));
+        offset += strlen(header->value);
+        memcpy(raw_response + offset, HTTP_HEADER_SEPARATOR, strlen(HTTP_HEADER_SEPARATOR));
+        offset += strlen(HTTP_HEADER_SEPARATOR);
+        header = header->next;
+    }
+    memcpy(raw_response + offset, HTTP_HEADER_SEPARATOR, strlen(HTTP_HEADER_SEPARATOR));
+    offset += strlen(HTTP_HEADER_SEPARATOR);
+    if (response->body_len > 0) {
+        memcpy(raw_response + offset, response->body, response->body_len);
+    }
+    *response_len = _response_len;
+    return raw_response;
 }
 char *http_read_adaptor(int connfd) {
     long nbytes, bytes_read = 0, current_size = READ_BUFFER_SIZE;

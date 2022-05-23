@@ -4,7 +4,6 @@ http_response *http_get(char* req) {
     http_response *response;
     FILE *f;
     char *path;
-    
     if ((request = http_parse_request(req)) == NULL) {
         return NULL;
     }
@@ -46,56 +45,40 @@ http_request *http_parse_request(char *req) {
     return http_request_constructor(method, resource);
 }
 http_response *get_response_404() {
-    http_response *response = http_response_constructor();
-    response->content = malloc(sizeof(HTTP_RESPONSE_404_HEADER));
-    if (!response->content) {
-        fprintf(stderr, "http.c - get_response_404() - malloc failed for http_response->content\n");
+    http_response *response = http_response_constructor(HTTP_RESPONSE_404_STATUS_LINE);
+    if (!response) {
+        fprintf(stderr, "http.c - get_response_404() - Failed to create response");
         exit(1);
     }
-    response->len = sizeof(HTTP_RESPONSE_404_HEADER);
-    memcpy(response->content, HTTP_RESPONSE_404_HEADER, response->len);
     return response;
 }
 http_response *get_response_200(FILE *f, char *path) {
-    http_response *response = http_response_constructor();
+    http_response *response = http_response_constructor(HTTP_RESPONSE_200_STATUS_LINE);
     if (!response) {
         fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for http_response...\n");
         return NULL;
     }
     // Get headers
     char *content_type = get_content_type(path);
-    char *header = get_response_200_headers(content_type);
-
+    // Insert Content-Type header
+    insert_response_header(response, HTTP_RESPONSE_CONTENT_TYPE_HEADER, content_type);
     // Get body
-    long body_len;
-    void *body;
-
-    /**
-     * @brief Need to check if content type is JPEG, if so, we need to treat the data as binary rather than text
-     */
-    body = retrieve_file_contents(f, &body_len);
-    response->content = malloc(strlen(header) + body_len);
-    if (response->content) {
-        //Combine header and body
-        memcpy(response->content, header, strlen(header));
-        memcpy(response->content+strlen(header), body, body_len);
-        response->len = strlen(header) + body_len;
-    } else {
-        fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for http_response->content\n");
-        exit(1);
-    }
-    free(header);
-    free(body);
+    response->body = retrieve_file_contents(f, &response->body_len);
     return response;
 }
-char *get_response_200_headers(char *content_type) {
-    char *header = malloc(HTTP_RESPONSE_200_HEADER_MAX_LEN * sizeof(char));
-    if (!header) {
-        fprintf(stderr, "http.c - get_response_200_headers() - malloc failed for char *header\n");
-        exit(1);
+void insert_response_header(http_response *http_response, char *name, char *value) {
+    if (!http_response) {
+        return;
     }
-    snprintf(header, HTTP_RESPONSE_200_HEADER_MAX_LEN, HTTP_RESPONSE_200_HEADER, content_type);
-    return header;
+    if (!http_response->headers) {
+        http_response->headers = http_response_header_constructor(name, value);
+    } else {
+        http_response_header *curr = http_response->headers;
+        while (curr->next != NULL) {
+            curr = curr->next;
+        }
+        curr->next = http_response_header_constructor(name, value);
+    }
 }
 char *transform_to_absolute_path(char *resource) {
     char *path = malloc(strlen(resource) + strlen(web_root_path) + 1);
@@ -162,25 +145,66 @@ char *retrieve_file_contents(FILE *f, long *file_len) {
     }
     return content;
 }
-http_response *http_response_constructor() {
+http_response *http_response_constructor(char *status_line) {
     http_response *response = malloc(sizeof(http_response));
     if (!response) {
         fprintf(stderr, "http.c - http_response_constructor() - malloc failed for http_response\n");
     }
-    response->content = NULL;
-    response->content_type = NULL;
-    response->len = 0;
+    response->status_line = malloc(strlen(status_line) + 1);
+    strcpy(response->status_line, status_line);
+    response->headers = NULL;
+    response->body = NULL;
+    response->body_len = 0;
 
     return response;
 }
 void http_response_destructor(http_response *response) {
-    if (response->content) {
-        free(response->content);
+    if (response->status_line) {
+        free(response->status_line);
     }
-    if (response->content_type) {
-        free(response->content_type);
+    if (response->headers) {
+        http_response_header_destructor(response->headers);
+    }
+    if (response->body) {
+        free(response->body);
     }
     free(response);
+}
+http_response_header *http_response_header_constructor(char *name, char *value) {
+    http_response_header *header = malloc(sizeof(http_response_header));
+    if (!header) {
+        fprintf(stderr, "http.c - http_response_header_constructor() - malloc failed for http_response_header\n");
+        exit(1);
+    }
+    header->name = malloc(strlen(name) + 1);
+    if (!header->name) {
+        fprintf(stderr, "http.c - http_response_header_constructor() - malloc failed for http_response_header->name\n");
+        exit(1);
+    }
+    strcpy(header->name, name);
+    header->value = malloc(strlen(value) + 1);
+    if (!header->value) {
+        fprintf(stderr, "http.c - http_response_header_constructor() - malloc failed for http_response_header->value\n");
+        exit(1);
+    }
+    strcpy(header->value, value);
+    header->next = NULL;
+    return header;
+}
+void http_response_header_destructor(http_response_header *response_header) {
+    if (!response_header) {
+        return;
+    }
+    http_response_header *curr = response_header;
+    while (curr != NULL) {
+        if (curr->name) {
+            free(curr->name);
+        }
+        if (curr->value) {
+            free(curr->value);
+        }
+        curr = curr->next;
+    }
 }
 http_request *http_request_constructor(char *method, char *resource) {
     http_request *request = malloc(sizeof(http_request));
