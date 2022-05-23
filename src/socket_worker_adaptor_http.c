@@ -12,7 +12,6 @@ void *http_get_string_adaptor(long *response_len, char *req) {
 }
 char *http_response_to_char_array(http_response *response, long *response_len) {
     char *raw_response;
-    long _response_len = 0;
     long offset = 0;
     
     if (!response) {
