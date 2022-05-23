@@ -14,7 +14,9 @@ http_response *http_get(char* req) {
     } else {
         response = get_response_200(f, request->resource);
         free(path);
+        fclose(f);
     }
+    http_request_destructor(request);
     return response;
 }
 http_request *http_parse_request(char *req) {
@@ -195,7 +197,7 @@ void http_response_header_destructor(http_response_header *response_header) {
     if (!response_header) {
         return;
     }
-    http_response_header *curr = response_header;
+    http_response_header *curr = response_header, *temp;
     while (curr != NULL) {
         if (curr->name) {
             free(curr->name);
@@ -203,7 +205,9 @@ void http_response_header_destructor(http_response_header *response_header) {
         if (curr->value) {
             free(curr->value);
         }
+        temp = curr;
         curr = curr->next;
+        free(temp);
     }
 }
 http_request *http_request_constructor(char *method, char *resource) {

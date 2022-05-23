@@ -19,6 +19,7 @@ void *socket_worker(void *arg) {
         free(request);
     }
     close(args->connfd);
+    free(args);
     return NULL;
 }
 worker_args *worker_args_constructor(int connfd, char *(*read_func)(int), void *(*response_func)(long*, char*)) {
