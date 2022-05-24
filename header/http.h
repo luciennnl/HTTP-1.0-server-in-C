@@ -52,22 +52,27 @@ http_request *http_parse_request(char *req);
 
 /**
  * @brief Function to generate a http response of status 404.
+ *        Only <status-line> will be populated
  *        Body will not be populated.
  * 
  * @return http_response* The generated http_response struct
  */
-http_response *get_response_404();
+http_response *http_response_404();
 
 /**
  * @brief Function to generate a http response of status 200.
- *        Headers will be populated based on get_response_200_headers
+ *        Headers populated:
+ *          <status-line>
+ *          <headers>
+ *              Content-Type
+ *          </header>
  *        Body will be populated with the content of the specified file
  * 
  * @param f The file to be parsed as the body
  * @param path The path to the specified file
  * @return http_response* The generated http_response struct
  */
-http_response *get_response_200(FILE *f, char *path);
+http_response *http_response_200(FILE *f, char *path);
 
 /**
  * @brief Function to insert a http_response_header into the headers property in a http_response struct object
@@ -106,7 +111,6 @@ bool is_illegal_path(char* path);
  *         - CONTENT_TYPE_JPEG "image/jpeg"
  *         - CONTENT_TYPE_JS "application/javascript"
  *         - CONTENT_TYPE_OCTET_STREAM "application/octet-stream"
- *              
  */
 char *get_content_type(char *path);
 

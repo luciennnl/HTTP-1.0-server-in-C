@@ -13,7 +13,7 @@ http_response *http_get(char* req) {
      *        INFO: This will be NULL in response to illegal paths
      */
     if (path == NULL) {
-        response = get_response_404();
+        response = http_response_404();
     } else {
         f = fopen(path, "r");
         /**
@@ -21,9 +21,9 @@ http_response *http_get(char* req) {
          *        Otherwise return a 200 response with the file contents
          */
         if (f == NULL) {
-            response = get_response_404();
+            response = http_response_404();
         } else {
-            response = get_response_200(f, request->resource);
+            response = http_response_200(f, request->resource);
             fclose(f);
         }
         free(path);
@@ -59,15 +59,15 @@ http_request *http_parse_request(char *req) {
     }
     return http_request_constructor(method, resource);
 }
-http_response *get_response_404() {
+http_response *http_response_404() {
     http_response *response = http_response_constructor(HTTP_RESPONSE_404_STATUS_LINE);
     if (!response) {
-        fprintf(stderr, "http.c - get_response_404() - Failed to create response");
+        fprintf(stderr, "http.c - http_response_404() - Failed to create response");
         exit(ERROR_STATUS_CODE);
     }
     return response;
 }
-http_response *get_response_200(FILE *f, char *path) {
+http_response *http_response_200(FILE *f, char *path) {
     http_response *response = http_response_constructor(HTTP_RESPONSE_200_STATUS_LINE);
     if (!response) {
         fprintf(stderr, "http.c - retrieve_file_contents() - malloc failed for http_response...\n");
