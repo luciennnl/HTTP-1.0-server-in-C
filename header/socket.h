@@ -29,6 +29,13 @@ struct socket_info {
 
 typedef struct socket_info socket_info;
 
+/**
+ * @brief Function to create a socket_info struct
+ * 
+ * @param protocol_no The number for the IP protocol (4, 6)
+ * @param port The port for the listening socket
+ * @return socket_info* The created socket_info struct
+ */
 socket_info *socket_init(protocol_number protocol_no, char *port);
 /**
  * @brief Function to free the memory allocated for a socket_info struct
