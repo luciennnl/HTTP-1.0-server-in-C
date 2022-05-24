@@ -8,18 +8,27 @@ http_response *http_get(char* req) {
         return NULL;
     }
     path = transform_to_absolute_path(request->resource);
-    f = fopen(path, "r");
     /**
-     * @brief If the path failed to be transformed or the file failed to open, return a 404 response
-     *        Otherwise return a 200 response with the file contents
+     * @brief If the path failed to be transformed, return a 404 response
+     *        INFO: This will be NULL in response to illegal paths
      */
-    if (path == NULL || f == NULL) {
+    if (path == NULL) {
         response = get_response_404();
     } else {
-        response = get_response_200(f, request->resource);
+        f = fopen(path, "r");
+        /**
+         * @brief If file could not be opened, return a 404 response
+         *        Otherwise return a 200 response with the file contents
+         */
+        if (f == NULL) {
+            response = get_response_404();
+        } else {
+            response = get_response_200(f, request->resource);
+            fclose(f);
+        }
         free(path);
-        fclose(f);
     }
+    
     http_request_destructor(request);
     return response;
 }
@@ -87,6 +96,7 @@ void insert_response_header(http_response *http_response, char *name, char *valu
     }
 }
 char *transform_to_absolute_path(char *resource) {
+
     char *path = malloc(strlen(resource) + strlen(web_root_path) + 1);
     if (!path) {
         fprintf(stderr, "http.c - transform_to_absolute_path() - malloc failed for char *path\n");

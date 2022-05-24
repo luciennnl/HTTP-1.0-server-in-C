@@ -82,13 +82,15 @@ char *socket_worker_read_func_adaptor_http(int connfd) {
         // We use memcpy as strcpy depends on the '\0' character which may not be read
         memcpy(message + bytes_read, buffer, nbytes);
         bytes_read += nbytes;
+        // Realloc memory in the case of the edge case where there is no additional space for the null terminator
+        if (bytes_read == current_size) {
+            message = realloc(message, current_size + 1);
+        }
+        message[bytes_read] = '\0';
         // Check for the end of header indicator as specified in RFC 2616
         if ((end_of_header = strstr(message, "\r\n\r\n")) != NULL || (end_of_header = strstr(message, "\n\n")) != NULL) {
             break;
         }
     }
-    // Realloc memory in the case of the edge case where there is no additional space for the null terminator
-    message = realloc(message, current_size + 1);
-    message[bytes_read] = '\0';
     return message;
 }

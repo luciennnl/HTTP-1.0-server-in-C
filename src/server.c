@@ -48,7 +48,7 @@ config *read_input(int argc, char *argv[]) {
 
     char* path_to_web_root = argv[PATH_TO_WEB_ROOT_ARG_NO];
 
-    res->path_to_web_root = malloc(strlen(path_to_web_root) + 1);
+    res->path_to_web_root = calloc(strlen(path_to_web_root) + 1, sizeof(char));
     if (!res->path_to_web_root) {
         fprintf(stderr, "server.c - read_input() - Malloc failed for config->path_to_web_root");
         exit(ERROR_STATUS_CODE);
