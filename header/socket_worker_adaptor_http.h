@@ -8,6 +8,7 @@
 #include <netdb.h>
 
 #include "./http.h"
+#include "./http_domain.h"
 #include "./util.h"
 
 #define READ_BUFFER_SIZE 8192
