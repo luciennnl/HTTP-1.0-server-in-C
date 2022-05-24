@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include "./util.h"
+
 #define HTTP_V "HTTP/1.0"
 #define HTTP_GET "GET"
 

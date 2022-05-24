@@ -9,6 +9,10 @@ http_response *http_get(char* req) {
     }
     path = transform_to_absolute_path(request->resource);
     f = fopen(path, "r");
+    /**
+     * @brief If the path failed to be transformed or the file failed to open, return a 404 response
+     *        Otherwise return a 200 response with the file contents
+     */
     if (path == NULL || f == NULL) {
         response = get_response_404();
     } else {
@@ -50,7 +54,7 @@ http_response *get_response_404() {
     http_response *response = http_response_constructor(HTTP_RESPONSE_404_STATUS_LINE);
     if (!response) {
         fprintf(stderr, "http.c - get_response_404() - Failed to create response");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     return response;
 }
@@ -86,7 +90,7 @@ char *transform_to_absolute_path(char *resource) {
     char *path = malloc(strlen(resource) + strlen(web_root_path) + 1);
     if (!path) {
         fprintf(stderr, "http.c - transform_to_absolute_path() - malloc failed for char *path\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     // Check if path is illegal first
     if (is_illegal_path(resource)) {
@@ -143,7 +147,7 @@ char *retrieve_file_contents(FILE *f, long *file_len) {
         fread(content, sizeof(char), *file_len, f);
     } else {
         fprintf(stderr, "http.c - retrieve_file_contents_binary() - malloc failed for char *content...\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     return content;
 }
@@ -190,19 +194,24 @@ http_response_header *http_response_header_constructor(char *name, char *value) 
     http_response_header *header = malloc(sizeof(http_response_header));
     if (!header) {
         fprintf(stderr, "http.c - http_response_header_constructor() - malloc failed for http_response_header\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     header->name = malloc(strlen(name) + 1);
     if (!header->name) {
         fprintf(stderr, "http.c - http_response_header_constructor() - malloc failed for http_response_header->name\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
+    /**
+     * @brief Make a copy instead of assigning the actual string because we could be assigning static data
+     *        which would cause a SEG fault when trying to free
+     */
     strcpy(header->name, name);
     header->value = malloc(strlen(value) + 1);
     if (!header->value) {
         fprintf(stderr, "http.c - http_response_header_constructor() - malloc failed for http_response_header->value\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
+    // Same reason as above
     strcpy(header->value, value);
     header->next = NULL;
     return header;
@@ -212,6 +221,7 @@ void http_response_header_destructor(http_response_header *response_header) {
         return;
     }
     http_response_header *curr = response_header, *temp;
+    // Free the linked list
     while (curr != NULL) {
         if (curr->name) {
             free(curr->name);
@@ -228,18 +238,23 @@ http_request *http_request_constructor(char *method, char *resource) {
     http_request *request = malloc(sizeof(http_request));
     if (!request) {
         fprintf(stderr, "http.c - http_request_constructor() - malloc failed for http_request\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     request->method = malloc(strlen(method) + 1);
     if (!request->method) {
         fprintf(stderr, "http.c - http_request_constructor()- malloc failed for http_request->method\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     request->resource = malloc(strlen(resource) + 1);
     if (!request->resource) {
         fprintf(stderr, "http.c - http_request_constructor()- malloc failed for http_request->resource\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
+
+    /**
+     * @brief Make a copy instead of assigning the actual string because we could be assigning static data
+     *        which would cause a SEG fault when trying to free
+     */
     strcpy(request->method, method);
     strcpy(request->resource, resource);
 

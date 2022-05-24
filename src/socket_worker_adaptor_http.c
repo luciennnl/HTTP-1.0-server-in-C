@@ -1,11 +1,12 @@
 #include "../header/socket_worker_adaptor_http.h"
-void *http_get_string_adaptor(long *response_len, char *req) {
+void *socket_worker_response_func_adaptor_http(long *response_len, char *req) {
     http_response *response = http_get(req);
 
     if (!response) {
         return NULL;
     }
 
+    // Convert to char array
     char *raw_response = http_response_to_char_array(response, response_len);
     http_response_destructor(response);
     return raw_response;
@@ -19,13 +20,16 @@ char *http_response_to_char_array(http_response *response, long *response_len) {
     }
     http_response_header *header = response->headers;
 
-    // Length of response = length of all headers + length of status line + end of header indicator + body length
+    /**
+     * @brief Length of response 
+     *  = length of all (headers + CRLF) + length of (status line + CRLF) + end of header indicator + body length
+     */
     *response_len = http_response_length(response);
     
     raw_response = malloc(*response_len);
     if (!raw_response) {
         fprintf(stderr, "http.c - http_response_to_char_array() - malloc failed for raw_response\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     /**
      * @brief Get http status line
@@ -51,11 +55,7 @@ char *http_response_to_char_array(http_response *response, long *response_len) {
     }
     return raw_response;
 }
-void memcpy_offset_strlen_helper(long *offset, void *dest, void *src) {
-    memcpy(dest + *offset, src, strlen(src));
-    *offset = *offset + strlen(src);
-}
-char *http_read_adaptor(int connfd) {
+char *socket_worker_read_func_adaptor_http(int connfd) {
     long nbytes, bytes_read = 0, current_size = READ_BUFFER_SIZE;
     char *message = malloc(READ_BUFFER_SIZE);
     char buffer[READ_BUFFER_SIZE];
@@ -63,7 +63,7 @@ char *http_read_adaptor(int connfd) {
 
     if (!message) {
         fprintf(stderr, "http.c - http_read_adaptor() - malloc failed for char *message\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) != -1) {
         // If EOF, then stop reading
@@ -75,7 +75,7 @@ char *http_read_adaptor(int connfd) {
 
             if (!message) {
                 fprintf(stderr, "http.c - http_read_adaptor() - realloc failed for *message\n");
-                exit(1);
+                exit(ERROR_STATUS_CODE);
             }
             current_size += READ_BUFFER_SIZE;
         }

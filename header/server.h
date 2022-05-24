@@ -15,11 +15,14 @@
 #include "./socket.h"
 #include "./http.h"
 #include "./socket_worker_adaptor_http.h"
+#include "./util.h"
 
 #define EXPECTED_INPUT_CNT 3
 #define PROTOCOL_NO_ARG_NO 1
 #define PORT_ARG_NO 2
 #define PATH_TO_WEB_ROOT_ARG_NO 3
+
+#define BACKLOG 10
 char* web_root_path;
 struct config {
     protocol_number protocol_no;

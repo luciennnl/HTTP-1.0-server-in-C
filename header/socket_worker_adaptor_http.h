@@ -1,12 +1,14 @@
 #ifndef SOCKET_WORKER_ADAPTOR_HTTP_H
 #define SOCKET_WORKER_ADAPTOR_HTTP_H
 
-#include "./http.h"
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
+
+#include "./http.h"
+#include "./util.h"
 
 #define READ_BUFFER_SIZE 8192
 
@@ -20,7 +22,7 @@
  * @param req The incoming request to be handled
  * @return void* The output response to be sent
  */
-void *http_get_string_adaptor(long *response_len, char *req);
+void *socket_worker_response_func_adaptor_http(long *response_len, char *req);
 
 /**
  * @brief Function to convert a http_response struct into a char* array
@@ -44,16 +46,6 @@ void *http_get_string_adaptor(long *response_len, char *req);
 char *http_response_to_char_array(http_response *response, long *response_len);
 
 /**
- * @brief Util function for http_response_to_char_array
- *        Copies a void* source into destination by a size of strlen(source) bytes
- *        Also updates offset by adding strlen(source)
- * 
- * @param offset The offset to copy the source memory into
- * @param dest The destination to copy the source memory into
- * @param src The source memory that will be copied over by strlen(src)
- */
-void memcpy_offset_strlen_helper(long *offset, void *dest, void *src);
-/**
  * @brief Adaptor function for the interface provided by socket.c/socket_handle_messages()
  *        Implements reading of an incoming socket according to the rules defined in RFC 2616 - Hypertext Transfer Protocol
  *        https://datatracker.ietf.org/doc/html/rfc2616
@@ -63,6 +55,6 @@ void memcpy_offset_strlen_helper(long *offset, void *dest, void *src);
  * @param connfd The socket file descriptor to read messages from
  * @return char* An output string of the message that is read
  */
-char *http_read_adaptor(int connfd);
+char *socket_worker_read_func_adaptor_http(int connfd);
 
 #endif

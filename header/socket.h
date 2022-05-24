@@ -13,6 +13,8 @@
 #include <fcntl.h>
 
 #include "./socket_worker.h"
+#include "./util.h"
+
 enum protocol_number {
     IPV4 = 4,
     IPV6 = 6

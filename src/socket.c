@@ -7,7 +7,7 @@ socket_info *socket_init(protocol_number protocol_no, char *port) {
 
     if (!out) {
         fprintf(stderr, "http.c - socket_init()- malloc failed for socket_info\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     memset(&hints, 0, sizeof(hints));
 
@@ -25,7 +25,7 @@ socket_info *socket_init(protocol_number protocol_no, char *port) {
 
     if (getaddrinfo(NULL, port, &hints, &res) != 0) {
         fprintf(stdout, "server.c - socket_init() - Failed to initialize socket (getaddrinfo failed)...\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     };
 
     // Get addrinfo based on hints
@@ -33,13 +33,13 @@ socket_info *socket_init(protocol_number protocol_no, char *port) {
 
     if ((listenfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)) < 0) {
         fprintf(stderr, "server.c - socket_init() - Failed to create socket from desired family type\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
 
     // Set socket options so that the same port can be reused with no downtime
     if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &re, sizeof(re)) != 0) {
         fprintf(stderr, "server.c - socket_init() - Failed to set socket options (setsockopt() failed)...\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     out->addr = addr;
     out->fd = listenfd;
@@ -61,19 +61,19 @@ struct addrinfo *get_socket_of_family_type(struct addrinfo *addr, int family_typ
     }
     if (!p) {
         fprintf(stderr, "server.c - get_socket_of_family_type() - Failed to find socket of desired family type\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     return p;
 }
 void socket_listen(int listenfd, struct addrinfo *addr) {
     if (bind(listenfd, addr->ai_addr, addr->ai_addrlen) != 0) {
         fprintf(stderr, "server.c - socket_listen() - Failed to bind socket, exiting...\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     };
     free(addr);
     if (listen(listenfd, SOCKET_BACKLOG) != 0) {
         fprintf(stderr, "server.c - socket_listen() - Failed to listen socket, exiting...\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
 }
 void socket_handle_messages(int listenfd, int client_max, char *(*read_func)(int), void *(*response_func)(long*, char*)) {

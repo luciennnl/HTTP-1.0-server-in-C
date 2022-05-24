@@ -26,7 +26,7 @@ worker_args *worker_args_constructor(int connfd, char *(*read_func)(int), void *
     worker_args *new_worker_args = malloc(sizeof(worker_args));
     if (!new_worker_args) {
         fprintf(stderr, "socket_worker.c - worker_args_constructor()- malloc failed for worker_args\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     new_worker_args->response_func = response_func;
     new_worker_args->read_func = read_func;

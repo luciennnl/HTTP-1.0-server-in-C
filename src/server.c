@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     
     socket_listen(socket->fd, socket->addr);
 
-    socket_handle_messages(socket->fd, 10, &http_read_adaptor, &http_get_string_adaptor);
+    socket_handle_messages(socket->fd, BACKLOG, &socket_worker_read_func_adaptor_http, &socket_worker_response_func_adaptor_http);
     close(socket->fd);
 
     socket_free(socket);
@@ -20,7 +20,7 @@ config *read_input(int argc, char *argv[]) {
     // Check additional arguments is count 3
     if (argc != EXPECTED_INPUT_CNT + 1) {
         fprintf(stderr, "server.c - read_input() - Failed to read input: Expected 3 arguments but got %d\n", (argc-1));
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     
     config *res = malloc(sizeof(config));
@@ -28,18 +28,21 @@ config *read_input(int argc, char *argv[]) {
     // Parse arguments into config struct
     if (!res) {
         fprintf(stderr, "server.c - read_input()- malloc failed for config\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
+    // Check if IPV4 protocol number is 4 or 6
     int protocol_no = atoi(argv[PROTOCOL_NO_ARG_NO]);
     if (protocol_no != IPV4 && protocol_no != IPV6) {
         fprintf(stderr, "server.c - read_input() - Failed to read input: Expected either 4 (IPV4) or 6 (IPV6) for the first argument\n");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     res->protocol_no = protocol_no;
+
+    // Port number
     res->port = malloc(strlen(argv[PORT_ARG_NO]) + 1);
     if (!res->port) {
         fprintf(stderr, "server.c - read_input() - Malloc failed for config->port");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
     memcpy(res->port, argv[PORT_ARG_NO], strlen(argv[PORT_ARG_NO]) + 1);
 
@@ -48,7 +51,7 @@ config *read_input(int argc, char *argv[]) {
     res->path_to_web_root = malloc(strlen(path_to_web_root) + 1);
     if (!res->path_to_web_root) {
         fprintf(stderr, "server.c - read_input() - Malloc failed for config->path_to_web_root");
-        exit(1);
+        exit(ERROR_STATUS_CODE);
     }
 
     /**

@@ -9,6 +9,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "./util.h"
+
 struct worker_args {
     void *(*response_func)(long*, char*);
     char *(*read_func)(int);
