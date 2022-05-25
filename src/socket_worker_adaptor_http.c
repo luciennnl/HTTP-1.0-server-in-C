@@ -64,7 +64,7 @@ char *socket_worker_read_func_adaptor_http(int connfd) {
         fprintf(stderr, "http.c - http_read_adaptor() - malloc failed for char *message\n");
         exit(ERROR_STATUS_CODE);
     }
-    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) > -1) {
+    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) != -1) {
         // If EOF, then stop reading
         if (nbytes == 0) {
             break;
