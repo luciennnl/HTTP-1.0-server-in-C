@@ -1,7 +1,6 @@
 #include "../header/socket_worker_adaptor_http.h"
 void *socket_worker_response_func_adaptor_http(long *response_len, char *req) {
     http_response *response = http_get(req);
-
     if (!response) {
         return NULL;
     }
@@ -65,7 +64,7 @@ char *socket_worker_read_func_adaptor_http(int connfd) {
         fprintf(stderr, "http.c - http_read_adaptor() - malloc failed for char *message\n");
         exit(ERROR_STATUS_CODE);
     }
-    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) != -1) {
+    while ((nbytes = recv(connfd, buffer, sizeof(buffer), 0)) > -1) {
         // If EOF, then stop reading
         if (nbytes == 0) {
             break;
@@ -86,11 +85,16 @@ char *socket_worker_read_func_adaptor_http(int connfd) {
         if (bytes_read == current_size) {
             message = realloc(message, current_size + 1);
         }
+        // Note assigning this null terminator is important to prevent undefined behaviour when using strstr function
         message[bytes_read] = '\0';
         // Check for the end of header indicator as specified in RFC 2616
         if ((end_of_header = strstr(message, "\r\n\r\n")) != NULL || (end_of_header = strstr(message, "\n\n")) != NULL) {
             break;
         }
+    }
+    // If no bytes has been read, we need to add a null terminator
+    if (bytes_read == 0) {
+        message[0] = '\0';
     }
     return message;
 }
